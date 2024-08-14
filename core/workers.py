@@ -144,7 +144,7 @@ class MCTSWorker:
         return transition_buffers
 
 
-# @ray.remote
+@ray.remote
 class RolloutWorker(MCTSWorker):
     def __init__(
         self,
@@ -163,11 +163,11 @@ class RolloutWorker(MCTSWorker):
 
     def run(self):
 
-        # while True:  # Wait for start signal
-        #     if not ray.get(self.storage.get_start_signal.remote()):
-        #         time.sleep(1)
-        #         continue
-        #     break
+        while True:  # Wait for start signal
+            if not ray.get(self.storage.get_start_signal.remote()):
+                time.sleep(1)
+                continue
+            break
 
         collect_update_step = -1
         while True:
@@ -200,11 +200,11 @@ class RolloutWorker(MCTSWorker):
             # self.replay_buffer.add(transition_buffers)
 
             collect_update_step = update_step
-            # self.storage.incr_workers_finished.remote()
-            self.storage.incr_workers_finished()
+            self.storage.incr_workers_finished.remote()
+            # self.storage.incr_workers_finished()
 
 
-# @ray.remote
+@ray.remote
 class TestWorker(MCTSWorker):
     def __init__(
         self,
@@ -234,7 +234,7 @@ class TestWorker(MCTSWorker):
         return self.stats
 
 
-# @ray.remote
+@ray.remote
 class DemonstrationWorker:
     def __init__(
         self,
@@ -279,8 +279,8 @@ class DemonstrationWorker:
 
     def run(self):
         # Wait until start signal
-        # while ray.get(self.replay_buffer.size.remote()) < self.config.demo_buffer_size:
-        while self.replay_buffer.size() < self.config.demo_buffer_size:
+        while ray.get(self.replay_buffer.size.remote()) < self.config.demo_buffer_size:
+            # while self.replay_buffer.size() < self.config.demo_buffer_size:
             transition_buffer = self.collect()
-            # self.replay_buffer.add.remote(transition_buffer)
-            self.replay_buffer.add(transition_buffer)
+            self.replay_buffer.add.remote(transition_buffer)
+            # self.replay_buffer.add(transition_buffer)

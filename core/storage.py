@@ -11,7 +11,7 @@ def add_logs(src_dict, target_dict):
             target_dict[k].append(v)
 
 
-# @ray.remote
+@ray.remote
 class SharedStorage:
     def __init__(self, config, amp):
         self.config = config

@@ -238,7 +238,7 @@ class TransitionBuffer:
             summary_writer.add_scalar(f"{prefix}/{k}_max", max(v), update_step)
 
 
-# @ray.remote
+@ray.remote
 class ReplayBuffer:
     def __init__(self, size: int) -> None:
         self.size: int = size
