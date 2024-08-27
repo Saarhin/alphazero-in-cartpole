@@ -59,14 +59,11 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
 
     for train_step in range(config.training_steps):
         print(f"Training step {train_step}...")
-        if train_step >= config.training_steps:  # Check if we are done
-            time.sleep(30)
-            break
+        # if train_step >= config.training_steps:  # Check if we are done
+        #     time.sleep(30)
+        #     break
 
         while True:  # Wait until RolloutWorkers collected their samples
-            # workers_finished = storage.get_workers_finished()
-            # if workers_finished == True:
-            #     break
             workers_finished = ray.get(storage.get_workers_finished.remote())
             if workers_finished != args.num_rollout_workers:
                 print(

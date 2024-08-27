@@ -163,12 +163,13 @@ class RolloutWorker(MCTSWorker):
         self.storage = storage
 
     def run(self):
+        breakpoint()
         while True:  # Wait for start signal
             if not ray.get(self.storage.get_start_signal.remote()):
                 time.sleep(1)
                 continue
             break
-
+        
         collect_update_step = -1
         while True:
             # Check if training finished
