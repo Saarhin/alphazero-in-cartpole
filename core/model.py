@@ -2,11 +2,66 @@ from typing import List
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
-import ray
 
 from config.base import BaseConfig
 from core.replay_buffer import MCTSRollingWindow, TrainingBatch
+
+
+class ResidualBlock(nn.Module):
+    
+    def __init__(self, in_channels, out_channels, stride=1):
+        super(ResidualBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels)
+            )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+        out = F.relu(out)
+        return out
+    
+
+class ResNet(nn.Module):
+    def __init__(self, input_shape, num_blocks=10, out_channels=64, hidden_size=512):
+        super(ResNet, self).__init__()
+        self.conv1 = nn.Conv2d(input_shape[0], out_channels, kernel_size=3, padding=1)
+        self.res_blocks = nn.ModuleList(
+            [ResidualBlock(out_channels, out_channels) for _ in range(num_blocks)]
+        )
+        self._hidden_size = hidden_size
+
+        self.conv2 = nn.Conv2d(out_channels, out_channels/4, kernel_size=1)
+        self.obs_out = nn.Linear(input_shape[1] * input_shape[2] * out_channels/4, hidden_size)
+
+        self.train()
+
+    def forward(self, x):
+        x = self.conv1(x)
+
+        for block in self.res_blocks:
+            x = block(x)
+
+        x = self.conv2(x)
+        x = x.view(x.size(0), -1)  # Flatten
+        obs_out = F.relu(self.obs_out(x))
+
+        return obs_out
+
+    @property
+    def output_size(self):
+        return self._hidden_size
 
 
 class BaseModel(nn.Module):
@@ -34,12 +89,27 @@ class BaseModel(nn.Module):
         self.load_state_dict(weights)
 
 
-class StandardModel(BaseModel):
-    def __init__(self, config, obs_shape, num_act, device, amp):
+class ResModel(BaseModel):
+    def __init__(self, config, obs_shape, num_act, device, amp, hidden_size=512):
         super().__init__(config, obs_shape, num_act, device, amp)
-        self.shared = None
-        self.actor = None
-        self.critic = None
+        
+        self.shared = ResNet(obs_shape, num_blocks=10, out_channels=64, hidden_size=hidden_size)
+        self.actor = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, num_act),
+        )
+        self.critic = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, self.value_support.size),
+        )
+        
+        self.to(device)
 
     def forward(self, x):
         with torch.autocast(device_type=self.device, dtype=torch.bfloat16, enabled=self.amp):

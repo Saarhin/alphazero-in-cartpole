@@ -270,7 +270,8 @@ class MCTS:
                 leaf_nodes.append(to_node)
                 dones.append(done)
                 infos.append(info)
-
+                
+            breakpoint()
             # Calculate policy logits and value predictions for expanded nodes
             priors, values = self.model.compute_priors_and_values(windows)
 
