@@ -42,7 +42,10 @@ class Node:
         self.expanded = True
 
     def add_exploration_noise(self, noise, exploration_fraction):
-        self.child_priors = self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction
+        self.child_priors = (
+            self.child_priors * (1 - exploration_fraction)
+            + noise * exploration_fraction
+        )
 
     def child_number_visits(self):
         return np.array([child.num_visits for _, child in self.children.items()])
@@ -53,12 +56,16 @@ class Node:
         for _, child in self.children.items():  # Update min-max stats
             child_value = child.mean_value()
             if child.num_visits > 0:
-                min_max_stats.update(accu([child.reward, self.config.gamma * child_value]))
+                min_max_stats.update(
+                    accu([child.reward, self.config.gamma * child_value])
+                )
 
         for _, child in self.children.items():  # Calculate child values
             child_value = child.mean_value()
             if child.num_visits > 0:
-                child_value = min_max_stats.normalize(accu([child.reward, self.config.gamma * child_value]))
+                child_value = min_max_stats.normalize(
+                    accu([child.reward, self.config.gamma * child_value])
+                )
             else:
                 child_value = 0.0
             values.append(child_value)
@@ -153,13 +160,23 @@ class BatchTree:
             while node.expanded:
                 best_child = node.best_child(min_max_stats[i])
                 best_child.parent_traversed = node
-                if best_child.expanded:  # We can not do node.obs at the beginning of the loop, because the root node is already inside the sliding window
-                    mcts_windows[i].add(best_child.obs, best_child.env_state, best_child.reward, best_child.action, best_child.info)
+                if (
+                    best_child.expanded
+                ):  # We can not do node.obs at the beginning of the loop, because the root node is already inside the sliding window
+                    mcts_windows[i].add(
+                        best_child.obs,
+                        best_child.env_state,
+                        best_child.reward,
+                        best_child.action,
+                        best_child.info,
+                    )
                 node = best_child
                 trajectories[-1].append(node)
         return trajectories
 
-    def backpropagate(self, leaf_nodes, mcts_windows, values, priors, terminals, infos, min_max_stats):
+    def backpropagate(
+        self, leaf_nodes, mcts_windows, values, priors, terminals, infos, min_max_stats
+    ):
         for i in range(len(leaf_nodes)):
             node: Node = leaf_nodes[i]  # Take vals for current leaf_node
             o = mcts_windows[i].latest_obs()
@@ -179,9 +196,15 @@ class BatchTree:
             if self.config.hash_nodes:
                 node_hash = self.config.hash_env_state(node.env_state)
                 if node_hash in self.node_hash_tables[i]:
-                    node_ = self.node_hash_tables[i][node_hash]  # Get the node from the hash table
-                    node_.parent_traversed = node.parent_traversed  # Set attribute for backpropagation
-                    node_.parent_traversed.children[node.action] = node_  # Set the child of the parent node to the preexisting node
+                    node_ = self.node_hash_tables[i][
+                        node_hash
+                    ]  # Get the node from the hash table
+                    node_.parent_traversed = (
+                        node.parent_traversed
+                    )  # Set attribute for backpropagation
+                    node_.parent_traversed.children[node.action] = (
+                        node_  # Set the child of the parent node to the preexisting node
+                    )
                     node = node_
                 else:
                     self.node_hash_tables[i][node_hash] = node
@@ -210,9 +233,9 @@ class BatchTree:
 
 class MCTS:
     def __init__(
-            self,
-            config,
-            model,
+        self,
+        config,
+        model,
     ):
         self.config = config
         self.model = model
@@ -223,6 +246,7 @@ class MCTS:
         min_max_stats = [MinMaxStats() for _ in range(roots.root_num)]
         for simulation_index in range(self.config.num_simulations):
             windows = deepcopy(mcts_windows)
+            # breakpoint()
             trajectories = roots.traverse(windows, min_max_stats)
 
             dones = []
@@ -240,7 +264,9 @@ class MCTS:
                 self.env.set_state(from_node.env_state)
                 obs, reward, done, info = self.env.step(to_node.action)
 
-                windows[env_index].add(obs, self.env.get_state(), reward, to_node.action, info)
+                windows[env_index].add(
+                    obs, self.env.get_state(), reward, to_node.action, info
+                )
                 leaf_nodes.append(to_node)
                 dones.append(done)
                 infos.append(info)
@@ -251,14 +277,25 @@ class MCTS:
             # Backpropagation value predictions
             values = [0.0 if dones[i] else values[i] for i in range(roots.root_num)]
 
-            debug = False  # Set to True for MCTS tree plotting (before and after backprop)
+            debug = (
+                False  # Set to True for MCTS tree plotting (before and after backprop)
+            )
             if debug:
                 from core.util import plot_tree
-                plot_tree(roots.roots[0], leaf_nodes[0], float(round(values[0], 4)), min_max_stats[0])
+
+                plot_tree(
+                    roots.roots[0],
+                    leaf_nodes[0],
+                    float(round(values[0], 4)),
+                    min_max_stats[0],
+                )
                 breakpoint()
-            roots.backpropagate(leaf_nodes, windows, values, priors, dones, infos, min_max_stats)
+            roots.backpropagate(
+                leaf_nodes, windows, values, priors, dones, infos, min_max_stats
+            )
             if debug:
                 from core.util import plot_tree
+
                 plot_tree(roots.roots[0], leaf_nodes[0], values[0], min_max_stats[0])
                 breakpoint()
 

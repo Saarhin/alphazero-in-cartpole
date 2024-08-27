@@ -16,6 +16,8 @@ from core.storage import SharedStorage
 def train(args, config: BaseConfig, model, summary_writer, log_dir):
     print("Starting training...")
     ray.init()
+    print("Ray initialized")
+
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=1e-3,

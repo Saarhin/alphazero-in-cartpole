@@ -66,6 +66,7 @@ class MCTSWorker:
             )
 
             windows = deepcopy(mcts_windows)
+            # breakpoint()
             root_visit_dists, root_values = mcts.search(
                 roots, windows
             )  # Do MCTS search
@@ -162,7 +163,6 @@ class RolloutWorker(MCTSWorker):
         self.storage = storage
 
     def run(self):
-
         while True:  # Wait for start signal
             if not ray.get(self.storage.get_start_signal.remote()):
                 time.sleep(1)
@@ -284,3 +284,8 @@ class DemonstrationWorker:
             transition_buffer = self.collect()
             self.replay_buffer.add.remote(transition_buffer)
             # self.replay_buffer.add(transition_buffer)
+            if (
+                ray.get(self.replay_buffer.size.remote())
+                >= self.config.demo_buffer_size
+            ):
+                print("Collection done")

@@ -1,6 +1,7 @@
 import torch.nn as nn
 import graphviz
 import numpy as np
+import torch
 
 
 def mlp(
@@ -96,6 +97,13 @@ def plot_tree(root_node, leaf_node, V_est, min_max_stats):
         parent = parent.parent_traversed
     plot_node(V_est, nodes, leaf_node, g, root_node, 0, min_max_stats)
     g.view()
+    
+def set_seed(seed):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 class MinMaxStats:

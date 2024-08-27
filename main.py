@@ -5,6 +5,7 @@ import os
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
+import wandb
 from datetime import datetime
 
 from core.pretrain import pretrain
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     parser = ArgumentParser("AlphaZero implemented efficiently using Ray.")
     parser.add_argument("--env", type=str, default="cartpole")
     parser.add_argument("--results_dir", default="results")
-    parser.add_argument("--opr", default="train,test", type=str)
+    parser.add_argument("--opr", default="test", type=str)
     parser.add_argument("--num_rollout_workers", default=4, type=int)
     # parser.add_argument("--num_rollout_workers", default=1, type=int)
     parser.add_argument("--num_cpus", default=8, type=float)
@@ -25,10 +26,16 @@ if __name__ == "__main__":
     parser.add_argument("--num_cpus_per_worker", default=4, type=float)
     parser.add_argument("--num_gpus_per_worker", default=0.25, type=float)
     parser.add_argument("--num_test_episodes", default=200, type=float)
-    parser.add_argument("--model_path", default=None)
+    parser.add_argument(
+        "--model_path",
+        default="/home/swang848/efficientalphazero/results/cartpole_14082024_1540/model_latest.pt",
+    )
     parser.add_argument("--device_workers", default="cuda", type=str)
     parser.add_argument("--device_trainer", default="cuda", type=str)
     parser.add_argument("--amp", action="store_true")
+    parser.add_argument("--wandb", default=False, type=bool)
+    parser.add_argument("--debug", default=False, type=bool)
+    parser.add_argument("--group_name", default="default", type=str)
 
     config_args = (
         []
@@ -55,8 +62,14 @@ if __name__ == "__main__":
 
     sub_dir = datetime.now().strftime("%d%m%Y_%H%M")
     sub_dir = f"{args.env.lower()}_{sub_dir}"
+    if args.debug:
+        sub_dir = f"debug/{sub_dir}"
     log_dir = os.path.join(args.results_dir, sub_dir)
     summary_writer = SummaryWriter(log_dir, flush_secs=10)
+    if not args.debug and args.wandb:
+        wandb.init(project="AlphaZero_Cartpole", group=args.group_name, config=config)
+    else:
+        pass
 
     model = config.create_model(
         args.device_trainer, args.amp

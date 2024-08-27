@@ -1,19 +1,17 @@
 import ray
+import sys
+from test2 import my_task, post_mortem
+# Add RAY_DEBUG environment variable to enable Ray Debugger
+ray.init(
+    runtime_env={
+        "env_vars": {"RAY_DEBUG": "1"},
+    }
+)
+
+print(len(sys.argv))
+if len(sys.argv) == 1:
+    ray.get(my_task.remote(10))
 
 
-@ray.remote
-class Counter:
-    def __init__(self):
-        self.value = 0
 
-    def increment(self):
-        self.value += 1
-        return self.value
-
-    def get_counter(self):
-        return self.value
-
-
-# Create an actor from this class.
-counter = Counter.remote()
-print(1)
+ray.get(post_mortem.remote(10))
