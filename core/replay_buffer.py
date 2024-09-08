@@ -56,14 +56,14 @@ class MCTSRollingWindow:
         self.reset()
 
     def reset(self):
-        self.obs = np.zeros(self.obs_shape[0] * self.frame_stack)
+        self.obs = np.zeros((self.obs_shape[0] * self.frame_stack, *self.obs_shape[1:]))
         self.actions = np.ones(self.frame_stack) * -1
         self.rewards = np.zeros(self.frame_stack)
         self.env_state = None
         self.info = None
 
     def add(self, obs, env_state, reward=None, action=None, info=None):
-        self.obs = np.roll(self.obs, self.obs_shape[0])
+        self.obs = np.roll(self.obs, self.obs_shape[0], axis=0)
         self.env_state = env_state
         self.info = info
         self.obs[: self.obs_shape[0]] = obs

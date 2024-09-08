@@ -260,7 +260,7 @@ class MCTS:
 
                 from_node = trajectory[-2]
                 to_node = trajectory[-1]
-
+                
                 self.env.set_state(from_node.env_state)
                 obs, reward, done, info = self.env.step(to_node.action)
 
