@@ -20,7 +20,7 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
-        lr=1e-3,
+        lr=config.lr,
         betas=(0.9, 0.999),
         weight_decay=config.weight_decay,
     )
@@ -38,9 +38,6 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
     replay_buffer = ReplayBuffer.remote(config.replay_buffer_size)
     storage = SharedStorage.remote(config, args.amp)
     storage.set_weights.remote(model.get_weights())  # Broadcast model
-    # replay_buffer = ReplayBuffer(config.replay_buffer_size)
-    # storage = SharedStorage(config, args.amp)
-    # storage.set_weights(model.get_weights())
 
     rollout_workers = [
         RolloutWorker.options(
@@ -48,12 +45,8 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
         ).remote(config, args.device_workers, args.amp, replay_buffer, storage)
         for _ in range(args.num_rollout_workers)
     ]
-    # rollout_worker = RolloutWorker(
-    #     config, args.device_workers, args.amp, replay_buffer, storage
-    # )
 
     workers = [rollout_worker.run.remote() for rollout_worker in rollout_workers]
-    # workers = rollout_worker.run()
 
     storage.set_start_signal.remote()
 
@@ -86,7 +79,6 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
             train_batch, _ = ray.get(
                 replay_buffer.sample.remote(config.batch_size, config.frame_stack)
             )
-            # train_batch, _ = replay_buffer.sample(config.batch_size, config.frame_stack)
             # else:
             #    train_batch, _ = ray.get(replay_buffer.sample.remote(int(config.batch_size * 0.7), config.frame_stack))
             #    demo_batch, _ = ray.get(demonstration_buffer.sample.remote(int(config.batch_size * 0.3), config.frame_stack))

@@ -4,6 +4,55 @@ import numpy as np
 import torch
 
 
+def random_seed(seed):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    
+
+def trans_coordinate(coordinate: list, grid_size: int, out_type: str) -> list:
+    """
+    the original point is the left upper corner [0, 0] in computer science coordinate systems;
+    the original point is the left lower corner [0, 5] in VTR coordinate systems.
+    """
+    if out_type == "cs":
+        return [grid_size - 1 - coordinate[1], coordinate[0]]
+    elif out_type == "vtr":
+        return [coordinate[1], grid_size - 1 - coordinate[0]]
+
+
+def fill_place_file(
+    results,
+    grid_size,
+    file_path=None,
+):
+    new_lines = list()
+    with open(file_path, "r") as file:
+        results_dict = dict()
+        for index, line in enumerate(file.readlines()):
+            if index >= 5:
+                result = trans_coordinate(results[index - 5], grid_size, "vtr")
+
+                if str(result) in results_dict.keys():
+                    results_dict[str(result)] += 1
+                else:
+                    results_dict[str(result)] = 1
+
+                line_split = line.strip().split("\t")
+                line_split[2] = str(result[0])
+                line_split[3] = str(result[1])
+                line_split[4] = str(results_dict[str(result)] - 1)
+                new_lines.append("\t".join(line_split) + "\n")
+
+            elif index < 5:
+                new_lines.append(line)
+
+    with open(file_path, "w") as file:
+        for line in new_lines:
+            file.write(line)
+
 def mlp(
         input_size,
         layer_sizes,
