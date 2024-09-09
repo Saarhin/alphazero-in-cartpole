@@ -120,12 +120,15 @@ class ResModel(BaseModel):
 
     def compute_priors_and_values(self, windows: List[MCTSRollingWindow]):
         obs = np.stack([window.obs for window in windows])
-        obs = torch.from_numpy(obs).to(self.device).float()
+        obs = torch.from_numpy(obs).to(self.device).float()     
+        mask = windows.action_mask[0]
+        mask = torch.from_numpy(mask).to(self.device).float()
 
         with torch.no_grad():
             policy_logits, values_logits = self.forward(obs)
 
-        priors = nn.Softmax(dim=-1)(policy_logits)
+        masked_policy_logits = torch.where(mask, policy_logits, torch.tensor(-float('inf')).to(self.device))
+        priors = nn.Softmax(dim=-1)(masked_policy_logits)
         values_softmax = nn.Softmax(dim=-1)(values_logits)
         values = self.config.phi_inverse_transform(values_softmax).flatten()
 

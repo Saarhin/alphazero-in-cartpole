@@ -45,8 +45,8 @@ class MCTSWorker:
         for i, env in enumerate(
             self.envs
         ):  # Initialize rolling windows for frame stacking
-            board_obs = env.reset()["board_image"]
-            [i].add(board_obs, env.get_state())
+            obs, info = env.reset()
+            mcts_windows[i].add(obs=obs["board_image"], env_state=env.get_state(), action_mask=obs["action_mask"], reward=None, action=None, info=info)
 
         while not all(finished):
             # Prepare roots
@@ -67,7 +67,7 @@ class MCTSWorker:
             )
 
             windows = deepcopy(mcts_windows)
-            breakpoint()
+            # breakpoint()
             root_visit_dists, root_values = mcts.search(
                 roots, windows
             )  # Do MCTS search
@@ -164,7 +164,7 @@ class RolloutWorker(MCTSWorker):
         self.storage = storage
 
     def run(self):
-        
+        breakpoint()
         while True:  # Wait for start signal
             if not ray.get(self.storage.get_start_signal.remote()):
                 time.sleep(1)

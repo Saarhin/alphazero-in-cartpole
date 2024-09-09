@@ -4,6 +4,7 @@ import shutil
 import gym
 import random
 from gym import spaces
+from copy import deepcopy
 
 from core.util import fill_place_file, trans_coordinate
 from core.preprocess import Preprocess
@@ -106,6 +107,7 @@ class Placement(gym.Env):
     def step(self, action):
         x = action // self.width
         y = action % self.width
+        self.action = action
 
         block_index = self.place_order[self.num_step_episode % self.num_blocks]
         board_image, place_infos = self._get_observation(block_index, x, y)
@@ -163,12 +165,25 @@ class Placement(gym.Env):
         self.place_coords = self.init_place_coords.copy()
         self.board_image = self.init_board_image.copy()
         self.place_infos = self.init_place_infos.copy()
+        
+        hpwl = self.calculate_hpwl()
+        (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
+        
+        infos = {
+            "placed_block": None,
+            "hpwl": hpwl,
+            "episode_steps": self.num_step_episode,
+            "cumulative_reward": self.cumulative_reward,
+            "wirelength": wirelength,
+            "num_episode": self.num_episode,
+        }
+        
         return {
             "board_image": self.board_image,
             "place_infos": self.place_infos,
             "action_mask": self.get_mask(),
             "next_block": self.place_order[0],
-        }
+        }, infos
 
     def get_mask(self, block_index=None, place_coords=None):
         if place_coords is None:
@@ -242,6 +257,16 @@ class Placement(gym.Env):
             )
         (wire_term, critical_path_delay, wirelength) = self.episode_reward()
         return wire_term, critical_path_delay, wirelength
+    
+    def set_state(self, state):
+        self.env = deepcopy(state[0])
+        self.num_step_episode = deepcopy(state[1])
+        self.actions = deepcopy(state[2])
+        obs = self.board_image
+        return obs
+    
+    def get_state(self):
+        return deepcopy(self), deepcopy(self.num_step_episode), deepcopy(self.action)
 
     def _get_observation(self, block_index, coord_x, coord_y):
 
