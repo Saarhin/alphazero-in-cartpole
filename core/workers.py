@@ -45,8 +45,8 @@ class MCTSWorker:
         for i, env in enumerate(
             self.envs
         ):  # Initialize rolling windows for frame stacking
-            obs, info = env.reset()
-            mcts_windows[i].add(obs=obs["board_image"], env_state=env.get_state(), action_mask=obs["action_mask"], reward=None, action=None, info=info)
+            obs, infos = env.reset()
+            mcts_windows[i].add(obs=obs["board_image"], env_state=env.get_state(), reward=None, action=None, infos=infos)
 
         while not all(finished):
             # Prepare roots

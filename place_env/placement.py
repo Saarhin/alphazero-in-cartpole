@@ -67,9 +67,6 @@ class Placement(gym.Env):
                 "place_infos": spaces.Box(
                     low=-1, high=np.inf, shape=(len(self.blocks_list), 7), dtype=float
                 ),
-                "action_mask": spaces.Box(
-                    low=0, high=1, shape=(self.width * self.height,), dtype=int
-                ),
                 "next_block": spaces.Discrete(self.num_blocks),
             }
         )
@@ -135,6 +132,7 @@ class Placement(gym.Env):
             "cumulative_reward": self.cumulative_reward,
             "wirelength": wirelength,
             "num_episode": self.num_episode,
+            "action_mask": action_mask,
         }
 
         self.num_step += 1
@@ -146,12 +144,12 @@ class Placement(gym.Env):
             place_infos = init_observation["place_infos"]
             action_mask = init_observation["action_mask"]
             next_block = init_observation["next_block"]
+            infos["action_mask"] = action_mask
 
         return (
             {
                 "board_image": board_image,
                 "place_infos": place_infos,
-                "action_mask": action_mask,
                 "next_block": next_block,
             },
             reward,
@@ -176,12 +174,12 @@ class Placement(gym.Env):
             "cumulative_reward": self.cumulative_reward,
             "wirelength": wirelength,
             "num_episode": self.num_episode,
+            "action_mask": self.get_mask(),
         }
         
         return {
             "board_image": self.board_image,
             "place_infos": self.place_infos,
-            "action_mask": self.get_mask(),
             "next_block": self.place_order[0],
         }, infos
 

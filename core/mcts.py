@@ -15,7 +15,7 @@ class Node:
         self.reward = None
         self.obs = None
         self.env_state = None
-        self.info = None
+        self.infos = None
         self.terminal = False
         self.expanded = False
 
@@ -26,11 +26,12 @@ class Node:
 
         self.child_priors = None
 
-    def expand(self, obs, reward, terminal, info, state, priors: np.ndarray):
+    def expand(self, obs, reward, terminal, infos, state, priors: np.ndarray):
         self.obs = obs
         self.reward = reward
         self.terminal = terminal
         self.env_state = state
+        self.infos = infos
 
         if terminal:
             return
@@ -112,11 +113,12 @@ class BatchTree:
 
         self.node_hash_tables = [{} for _ in range(root_num)]
 
-    def prepare(self, mcts_windows, exploration_fraction, priors, noises=None):
+    def prepare(self, mcts_windows, exploration_fraction, priors, infos, noises=None):
         for i in range(self.root_num):
             prior = priors[i]
             state = mcts_windows[i].env_state
             root = self.roots[i]
+            infos = infos[i]
 
             if not root.expanded and not root.terminal:
                 root.expand(mcts_windows[i].obs, None, False, None, state, prior)
@@ -168,7 +170,7 @@ class BatchTree:
                         best_child.env_state,
                         best_child.reward,
                         best_child.action,
-                        best_child.info,
+                        best_child.infos,
                     )
                 node = best_child
                 trajectories[-1].append(node)
@@ -262,21 +264,17 @@ class MCTS:
                 to_node = trajectory[-1]
                 
                 self.env.set_state(from_node.env_state)
-                obs, reward, done, info = self.env.step(to_node.action)
+                obs, reward, done, infos = self.env.step(to_node.action)
 
                 windows[env_index].add(
-                    obs, self.env.get_state(), reward, to_node.action, info
+                    obs, self.env.get_state(), reward, to_node.action, infos
                 )
                 leaf_nodes.append(to_node)
                 dones.append(done)
-                infos.append(info)
+                infos.append(infos)
                 
-            breakpoint()
             # Calculate policy logits and value predictions for expanded nodes
             priors, values = self.model.compute_priors_and_values(windows)
-
-            # Backpropagation value predictions
-            values = [0.0 if dones[i] else values[i] for i in range(roots.root_num)]
 
             debug = (
                 False  # Set to True for MCTS tree plotting (before and after backprop)

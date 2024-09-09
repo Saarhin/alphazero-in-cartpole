@@ -50,7 +50,6 @@ class MCTSRollingWindow:
         self.frame_stack = frame_stack
         self.obs = None
         self.actions = None
-        self.action_mask = None
         self.rewards = None
         self.env_state = None
         self.info = None
@@ -59,30 +58,24 @@ class MCTSRollingWindow:
     def reset(self):
         self.obs = np.zeros((self.obs_shape[0] * self.frame_stack, *self.obs_shape[1:]))
         self.actions = np.ones(self.frame_stack) * -1
-        self.action_mask = np.zeros((self.obs_shape[0], self.obs_shape[1] * self.obs_shape[2],))
         self.rewards = np.zeros(self.frame_stack)
         self.env_state = None
-        self.info = None
+        self.infos = [{} for _ in range(self.frame_stack)]
 
-    def add(self, obs, action_mask, env_state, reward=None, action=None, info=None):
+    def add(self, obs, env_state, reward=None, action=None, infos=None):
         self.obs = np.roll(self.obs, self.obs_shape[0], axis=0)
         self.action_mask = np.roll(self.action_mask, self.obs_shape[1]*self.obs_shape[2], axis=0)
         self.env_state = env_state
-        self.info = info
-        self.action_mask[0] = action_mask
+        self.infos = np.roll(self.infos, 1, axis=0)
+        self.infos[0] = infos if infos is not None else {}
         self.obs[: self.obs_shape[0]] = obs
-        if reward is not None:
-            self.rewards = np.roll(self.rewards, 1)
-            self.rewards[0] = reward
-        if action is not None:
-            self.actions = np.roll(self.actions, 1)
-            self.actions[0] = action
+        self.rewards = np.roll(self.rewards, 1)
+        self.rewards[0] = reward if reward is not None else 0
+        self.actions = np.roll(self.actions, 1)
+        self.actions[0] = action if action is not None else -1
 
     def latest_obs(self):
         return self.obs[: self.obs_shape[0]]
-    
-    def latest_action_mask(self):
-        return self.action_mask[0]
 
 
 @dataclass

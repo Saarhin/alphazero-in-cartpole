@@ -121,7 +121,7 @@ class ResModel(BaseModel):
     def compute_priors_and_values(self, windows: List[MCTSRollingWindow]):
         obs = np.stack([window.obs for window in windows])
         obs = torch.from_numpy(obs).to(self.device).float()     
-        mask = windows.action_mask[0]
+        mask = windows.infos[0]["action_mask"]
         mask = torch.from_numpy(mask).to(self.device).float()
 
         with torch.no_grad():
