@@ -1,11 +1,8 @@
-import os
 import gym
 
 from config.base import BaseConfig
 from core.model import ResModel
 from core.util import DiscreteSupport
-
-from core.preprocess import Preporcess
 import place_env
 
 
@@ -13,7 +10,6 @@ class Config(BaseConfig):
    
     def __init__(
         self,
-        log_dir: str,
         training_steps: int = 20,
         pretrain_steps: int = 0,
         model_broadcast_interval: int = 5,
@@ -44,6 +40,7 @@ class Config(BaseConfig):
         value_support: DiscreteSupport = DiscreteSupport(0, 22, 1.0),
         value_transform: bool = True,
         env_seed: int = None,
+        log_dir: str = None,
     ):
         super().__init__(
             training_steps,
@@ -77,15 +74,15 @@ class Config(BaseConfig):
             env_seed,
         )
         
-    def init_model(self, device, amp):      
-        env = self.env_creator()
+    def init_model(self, device, amp, log_dir):      
+        env = self.env_creator(log_dir)
         obs_shape = env.observation_space.shape
         num_act = env.action_space.n 
         
-        model = ResModel(self, obs_shape, num_act, device, amp)
+        model = ResModel(obs_shape, num_act, device, amp)
         model.to(device)
         return model, env
     
     def env_creator(self, log_dir):
-        return gym.make("Place-v0", log_dir)
+        return gym.make("Place-v0", log_dir=log_dir)
         

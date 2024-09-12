@@ -1,6 +1,6 @@
 from gym.envs.registration import register
 
 register(
-    id = "Place-v0",
-    entry_point = "place_env:Placement",
+    id='Place-v0',
+    entry_point='place_env.placement:Placement',
 )

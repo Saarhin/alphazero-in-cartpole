@@ -36,7 +36,7 @@ class Placement(gym.Env):
             pack_xml_path=os.path.join(self.data_dir, "tseng.net"), 
             block_infos_file_path=os.path.join(self.data_dir, "block.infos"),
             primitive_netlist_file_path=os.path.join(self.data_dir, "primitive.netlist"),
-            grid_constraints_file_path=os.path.join(self.data_dir, "grid.constraint"),
+            grid_constraint_path=os.path.join(self.data_dir, "grid.constraint"),
             blocks_place_file_path=os.path.join(self.data_dir, "tseng.place"))   
         
         truncate_step = preprocess.num_target_blocks

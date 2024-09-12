@@ -144,13 +144,14 @@ class ResModel(BaseModel):
         train_batch.to_torch(self.device)
 
         policy_logits, value_logits = self.forward(train_batch.obs)
+        masked_policy_logits = torch.where(train_batch.action_mask, policy_logits, torch.tensor(-float('inf')).to(self.device))
 
         value_targets = train_batch.value_targets
         if self.config.value_transform:
             value_targets = self.config.scalar_transform(value_targets)
         value_targets_phi = self.config.phi_transform(value_targets)
 
-        policy_loss = -(torch.log_softmax(policy_logits, dim=1) * train_batch.mcts_policies).mean()
+        policy_loss = -(torch.log_softmax(masked_policy_logits, dim=1) * train_batch.mcts_policies).mean()
         value_loss = -(torch.log_softmax(value_logits, dim=1) * value_targets_phi).mean()
 
         # Update prios

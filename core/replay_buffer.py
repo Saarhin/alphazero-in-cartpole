@@ -16,12 +16,17 @@ class TrainingBatch:
     dones: np.ndarray
     mcts_policies: np.ndarray
     value_targets: np.ndarray
+    action_mask: np.ndarray
     infos: List[Dict[Any, Any]]
 
     def to_torch(self, device):
         for f in fields(self):
             if f.name == "infos":
-                continue
+                setattr(self,
+                        f.name,
+                        torch.from_numpy(copy(getattr(self, f.name['action_mask']))).float().to(device),
+                )
+                
             setattr(
                 self,
                 f.name,
@@ -169,6 +174,8 @@ class TransitionBuffer:
                         sample_indices,
                     )
                 )
+            elif field_name == "action_mask":
+                samples = list(map(lambda i: samples[i]["action_mask"], sample_indices))
             else:
                 samples = list(map(lambda i: samples[i], sample_indices))
 
