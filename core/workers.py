@@ -95,7 +95,7 @@ class MCTSWorker:
                 # action = np.random.choice(range(self.env_action_space.n), p=mcts_policy)  # We could also sample instead of maxing
                 actions.append(action)
 
-                obs, reward, done, info = self.envs[env_index].step(
+                obs, reward, done, infos = self.envs[env_index].step(
                     action
                 )  # Apply action
 
@@ -109,7 +109,7 @@ class MCTSWorker:
                     ].latest_obs(),  # The observation the action is based upon (vs. `obs`, which is the observation the action generated)
                     reward,
                     done,
-                    info,
+                    infos,
                     mcts_policy,
                     root_values[env_index],
                     mcts_windows[env_index].env_state,
@@ -121,7 +121,7 @@ class MCTSWorker:
                     self.envs[env_index].get_state(),
                     reward=reward,
                     action=action,
-                    info=info,
+                    infos=infos,
                 )  # Update rolling window for frame stacking
 
                 if done:
@@ -164,7 +164,7 @@ class RolloutWorker(MCTSWorker):
         self.storage = storage
 
     def run(self):
-        breakpoint()
+        
         while True:  # Wait for start signal
             if not ray.get(self.storage.get_start_signal.remote()):
                 time.sleep(1)

@@ -39,7 +39,7 @@ class Placement(gym.Env):
             grid_constraints_file_path=os.path.join(self.data_dir, "grid.constraint"),
             blocks_place_file_path=os.path.join(self.data_dir, "tseng.place"))   
         
-        truncate_step = 5 * preprocess.num_target_blocks
+        truncate_step = preprocess.num_target_blocks
         
         # chip information preprocess
         self.num_blocks = preprocess.num_target_blocks
