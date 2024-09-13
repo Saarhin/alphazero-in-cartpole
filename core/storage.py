@@ -15,7 +15,7 @@ def add_logs(src_dict, target_dict):
 class SharedStorage:
     def __init__(self, config, amp):
         self.config = config
-        self.model = config.create_model("cpu", amp)
+        self.model = config.init_model("cpu", amp)
 
         self.start = False
         self.step_counter = 0

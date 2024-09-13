@@ -80,7 +80,7 @@ class BaseConfig:
     def obs_shape(self):
         if self._obs_shape is None:
             probe_env = self.env_creator()
-            self._obs_shape = probe_env.observation_space.shape
+            self._obs_shape = probe_env.observation_space['board_image'].shape
         return self._obs_shape
 
     @property
@@ -99,7 +99,7 @@ class BaseConfig:
     def collect_demonstration(self, env: gym.Env):
         raise NotImplementedError
 
-    def create_model(self, device):
+    def init_model(self, device):
         raise NotImplementedError
 
     def hash_env_state(self, env_state):

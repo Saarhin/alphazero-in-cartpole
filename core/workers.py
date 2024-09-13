@@ -21,13 +21,13 @@ class MCTSWorker:
         use_dirichlet: bool,
     ):
         self.config = config
-        self.model = self.config.create_model(device, amp)
+        self.model = self.config.init_model(device, amp)
         self.model.eval()
         self.num_envs = num_envs
         self.use_dirichlet = use_dirichlet
 
-        self.envs = [config.env_creator(log_dir=config.log_dir) for _ in range(self.num_envs)]
-        self.env_observation_space = self.envs[0].observation_space
+        self.envs = [config.env_creator() for _ in range(self.num_envs)]
+        self.env_observation_space = self.envs[0].observation_space['board_image']
         self.env_action_space = self.envs[0].action_space
 
     def collect(self):
@@ -45,8 +45,8 @@ class MCTSWorker:
         for i, env in enumerate(
             self.envs
         ):  # Initialize rolling windows for frame stacking
-            obs, infos = env.reset()
-            mcts_windows[i].add(obs=obs["board_image"], env_state=env.get_state(), reward=None, action=None, infos=infos)
+            obs, info = env.reset()
+            mcts_windows[i].add(obs=obs["board_image"], env_state=env.get_state(), reward=None, action=None, info=info)
 
         while not all(finished):
             # Prepare roots
@@ -67,7 +67,6 @@ class MCTSWorker:
             )
 
             windows = deepcopy(mcts_windows)
-            # breakpoint()
             root_visit_dists, root_values = mcts.search(
                 roots, windows
             )  # Do MCTS search
@@ -95,7 +94,7 @@ class MCTSWorker:
                 # action = np.random.choice(range(self.env_action_space.n), p=mcts_policy)  # We could also sample instead of maxing
                 actions.append(action)
 
-                obs, reward, done, infos = self.envs[env_index].step(
+                obs, reward, done, info = self.envs[env_index].step(
                     action
                 )  # Apply action
 
@@ -109,7 +108,7 @@ class MCTSWorker:
                     ].latest_obs(),  # The observation the action is based upon (vs. `obs`, which is the observation the action generated)
                     reward,
                     done,
-                    infos,
+                    info,
                     mcts_policy,
                     root_values[env_index],
                     mcts_windows[env_index].env_state,
@@ -117,11 +116,11 @@ class MCTSWorker:
                 )
 
                 mcts_windows[env_index].add(
-                    obs,
+                    obs['board_image'],
                     self.envs[env_index].get_state(),
                     reward=reward,
                     action=action,
-                    infos=infos,
+                    info=info,
                 )  # Update rolling window for frame stacking
 
                 if done:

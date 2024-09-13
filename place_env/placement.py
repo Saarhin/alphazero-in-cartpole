@@ -125,6 +125,9 @@ class Placement(gym.Env):
             (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
 
         self.cumulative_reward += 0.99**self.num_step_episode * reward
+        self.num_step += 1
+        self.num_step_episode += 1
+        
         infos = {
             "placed_block": block_index,
             "hpwl": hpwl,
@@ -135,16 +138,9 @@ class Placement(gym.Env):
             "action_mask": action_mask,
         }
 
-        self.num_step += 1
-        self.num_step_episode += 1
-
         if done:
-            init_observation = self.reset()
-            board_image = init_observation["board_image"]
-            place_infos = init_observation["place_infos"]
-            action_mask = init_observation["action_mask"]
+            init_observation, infos = self.reset()
             next_block = init_observation["next_block"]
-            infos["action_mask"] = action_mask
 
         return (
             {
@@ -240,32 +236,36 @@ class Placement(gym.Env):
     
     def call_simulator(self, place_coords, width):
         # gurantee the simulator path is valid
-        log_file_path = os.path.join(self.log_dir, random.randint(0, 9999))
-        if not os.path.exists(log_file_path):
-            os.makedirs(log_file_path)
+        self.log_file_path = os.path.join(self.log_dir, str(random.randint(0, 9999)))
+        if not os.path.exists(self.log_file_path):
+            os.makedirs(self.log_file_path)
         place_path = os.path.join(self.data_dir, "tseng.place")
         net_path = os.path.join(self.data_dir, "tseng.net")     
-        shutil.copy2(place_path, os.path.join(log_file_path, "tseng.place"))
-        shutil.copy2(net_path, os.path.join(log_file_path, "tseng.net"))
+        shutil.copy2(place_path, os.path.join(self.log_file_path, "tseng.place"))
+        shutil.copy2(net_path, os.path.join(self.log_file_path, "tseng.net"))
         
         fill_place_file(
                 place_coords,
                 width,
-                os.path.join(log_file_path, "tseng.place"),
+                os.path.join(self.log_file_path, "tseng.place"),
             )
-        (wire_term, critical_path_delay, wirelength) = self.episode_reward()
+        (wire_term, critical_path_delay, wirelength) = self.episode_reward(self.log_file_path)
         return wire_term, critical_path_delay, wirelength
     
+    # for mcts simulation
     def set_state(self, state):
-        self.env = deepcopy(state[0])
-        self.num_step_episode = deepcopy(state[1])
-        self.actions = deepcopy(state[2])
-        obs = self.board_image
-        return obs
+        self = deepcopy(state)
+        return self
     
-    def get_state(self):
-        return deepcopy(self), deepcopy(self.num_step_episode), deepcopy(self.action)
-
+    # for mcts simulation
+    def get_state(self):           
+        return deepcopy(self)
+    
+    def close(self):
+        gym.Env.close(self)
+        if os.path.exists(self.log_file_path):
+            shutil.rmtree(self.log_file_path)
+    
     def _get_observation(self, block_index, coord_x, coord_y):
 
         current_block_coord_x = self.place_coords[block_index][0]
@@ -491,8 +491,8 @@ class Placement(gym.Env):
             else:
                 pass
 
-    def episode_reward(self):
-        os.chdir(self.simulator_path)
+    def episode_reward(self, log_file_path):
+        os.chdir(log_file_path)
         stream = os.popen(
             "$VTR_ROOT/vpr/vpr \
             $VTR_ROOT/vtr_flow/arch/timing/EArch.xml \

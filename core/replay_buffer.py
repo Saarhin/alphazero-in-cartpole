@@ -57,7 +57,7 @@ class MCTSRollingWindow:
         self.actions = None
         self.rewards = None
         self.env_state = None
-        self.info = None
+        self.infos = None
         self.reset()
 
     def reset(self):
@@ -67,12 +67,11 @@ class MCTSRollingWindow:
         self.env_state = None
         self.infos = [{} for _ in range(self.frame_stack)]
 
-    def add(self, obs, env_state, reward=None, action=None, infos=None):
+    def add(self, obs, env_state, reward=None, action=None, info=None):
         self.obs = np.roll(self.obs, self.obs_shape[0], axis=0)
-        self.action_mask = np.roll(self.action_mask, self.obs_shape[1]*self.obs_shape[2], axis=0)
         self.env_state = env_state
         self.infos = np.roll(self.infos, 1, axis=0)
-        self.infos[0] = infos if infos is not None else {}
+        self.infos[0] = info if info is not None else {}
         self.obs[: self.obs_shape[0]] = obs
         self.rewards = np.roll(self.rewards, 1)
         self.rewards[0] = reward if reward is not None else 0
@@ -224,6 +223,7 @@ class TransitionBuffer:
     @staticmethod
     def compute_stats_buffers(buffers: List["TransitionBuffer"]):
         stats = {}
+        breakpoint()
         for buffer in buffers:
             for k, v in buffer.get_stats().items():
                 if k not in stats:

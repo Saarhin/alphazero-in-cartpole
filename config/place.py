@@ -71,18 +71,20 @@ class Config(BaseConfig):
             test_use_dirichlet,
             value_support,
             value_transform,
-            env_seed,
+            env_seed, 
         )
+        self.log_dir = log_dir
         
-    def init_model(self, device, amp, log_dir):      
-        env = self.env_creator(log_dir)
-        obs_shape = env.observation_space.shape
-        num_act = env.action_space.n 
+    def init_model(self, device, amp, log_dir=None):    
+        obs_shape = (self.obs_shape[0] * self.frame_stack,) + self.obs_shape[1:]
+        num_act = self.action_shape
         
-        model = ResModel(obs_shape, num_act, device, amp)
+        model = ResModel(self, obs_shape, num_act, device, amp)
         model.to(device)
-        return model, env
+        return model
     
-    def env_creator(self, log_dir):
+    def env_creator(self, log_dir=None):
+        if log_dir is None:
+            log_dir = self.log_dir
         return gym.make("Place-v0", log_dir=log_dir)
         

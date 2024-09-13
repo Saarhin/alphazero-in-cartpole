@@ -15,7 +15,7 @@ class Node:
         self.reward = None
         self.obs = None
         self.env_state = None
-        self.infos = None
+        self.info = None
         self.terminal = False
         self.expanded = False
 
@@ -26,12 +26,12 @@ class Node:
 
         self.child_priors = None
 
-    def expand(self, obs, reward, terminal, infos, state, priors: np.ndarray):
+    def expand(self, obs, reward, terminal, info, state, priors: np.ndarray):
         self.obs = obs
         self.reward = reward
         self.terminal = terminal
         self.env_state = state
-        self.infos = infos
+        self.info = info
 
         if terminal:
             return
@@ -86,7 +86,7 @@ class Node:
         c_term = (np.log(1 + self.num_visits + c_base) / c_base) + c_init
         visit_term = np.sqrt(self.num_visits) / (self.child_number_visits() + 1)
 
-        exploration = c_term * visit_term
+        exploration = c_term * visit_term * self.child_priors
         value = self.child_values(min_max_stats)
         return value + exploration
 
@@ -113,15 +113,15 @@ class BatchTree:
 
         self.node_hash_tables = [{} for _ in range(root_num)]
 
-    def prepare(self, mcts_windows, exploration_fraction, priors, infos, noises=None):
+    def prepare(self, mcts_windows, exploration_fraction, priors, noises=None):
         for i in range(self.root_num):
             prior = priors[i]
             state = mcts_windows[i].env_state
             root = self.roots[i]
-            infos = infos[i]
+            info = mcts_windows[i].infos[0]
 
             if not root.expanded and not root.terminal:
-                root.expand(mcts_windows[i].obs, None, False, None, state, prior)
+                root.expand(mcts_windows[i].obs, None, False, info, state, prior)
             if noises is not None:
                 noise = noises[i]
                 root.add_exploration_noise(noise, exploration_fraction)
@@ -170,7 +170,7 @@ class BatchTree:
                         best_child.env_state,
                         best_child.reward,
                         best_child.action,
-                        best_child.infos,
+                        best_child.info,
                     )
                 node = best_child
                 trajectories[-1].append(node)
@@ -246,9 +246,9 @@ class MCTS:
     def search(self, roots, mcts_windows):
         # Do one step of Batch MCTS
         min_max_stats = [MinMaxStats() for _ in range(roots.root_num)]
+        self.env.reset()
         for simulation_index in range(self.config.num_simulations):
             windows = deepcopy(mcts_windows)
-            # breakpoint()
             trajectories = roots.traverse(windows, min_max_stats)
 
             dones = []
@@ -263,15 +263,15 @@ class MCTS:
                 from_node = trajectory[-2]
                 to_node = trajectory[-1]
                 
-                self.env.set_state(from_node.env_state)
-                obs, reward, done, infos = self.env.step(to_node.action)
+                self.env = self.env.set_state(from_node.env_state)
+                obs, reward, done, info = self.env.step(to_node.action)
 
                 windows[env_index].add(
-                    obs, self.env.get_state(), reward, to_node.action, infos
+                    obs['board_image'], self.env.get_state(), reward, to_node.action, info
                 )
                 leaf_nodes.append(to_node)
                 dones.append(done)
-                infos.append(infos)
+                infos.append(info)
                 
             # Calculate policy logits and value predictions for expanded nodes
             priors, values = self.model.compute_priors_and_values(windows)
@@ -297,5 +297,5 @@ class MCTS:
 
                 plot_tree(roots.roots[0], leaf_nodes[0], values[0], min_max_stats[0])
                 breakpoint()
-
+        self.env.close()
         return roots.get_distributions(), roots.get_values()

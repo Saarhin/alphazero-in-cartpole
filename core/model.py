@@ -41,9 +41,9 @@ class ResNet(nn.Module):
             [ResidualBlock(out_channels, out_channels) for _ in range(num_blocks)]
         )
         self._hidden_size = hidden_size
-
-        self.conv2 = nn.Conv2d(out_channels, out_channels/4, kernel_size=1)
-        self.obs_out = nn.Linear(input_shape[1] * input_shape[2] * out_channels/4, hidden_size)
+        
+        self.conv2 = nn.Conv2d(out_channels, out_channels // 4, kernel_size=1)
+        self.obs_out = nn.Linear(input_shape[1] * input_shape[2] * out_channels // 4, hidden_size)
 
         self.train()
 
@@ -106,7 +106,7 @@ class ResModel(BaseModel):
             nn.ReLU(),
             nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, self.value_support.size),
+            nn.Linear(hidden_size, config.value_support.size),
         )
         
         self.to(device)
@@ -121,8 +121,8 @@ class ResModel(BaseModel):
     def compute_priors_and_values(self, windows: List[MCTSRollingWindow]):
         obs = np.stack([window.obs for window in windows])
         obs = torch.from_numpy(obs).to(self.device).float()     
-        mask = windows.infos[0]["action_mask"]
-        mask = torch.from_numpy(mask).to(self.device).float()
+        mask = np.stack([window.infos[0]["action_mask"] for window in windows])
+        mask = torch.from_numpy(mask).to(self.device).bool()
 
         with torch.no_grad():
             policy_logits, values_logits = self.forward(obs)
