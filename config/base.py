@@ -11,6 +11,7 @@ class BaseConfig:
             training_steps: int,  # Number of training steps
             pretrain_steps: int,  # Number of pretraining steps (only supported if Config implements `demonstrator_env_creator` and `collect_demonstration` methods.
             model_broadcast_interval: int,  # When to broadcast updated model weights to rollout workers
+            model_save_interval: int,  # When to save model weights
             num_sgd_iter: int,  # Number of SGD iterations per update
             clear_buffer_after_broadcast: bool,  # Whether to clear experience buffer after broadcasting new model weights
             root_value_targets: bool,  # Set to `True` to use MCTS value estimate as value target. Otherwise we use episode returns.
@@ -41,6 +42,7 @@ class BaseConfig:
         self.training_steps = training_steps
         self.pretrain_steps = pretrain_steps
         self.model_broadcast_interval = model_broadcast_interval
+        self.model_save_interval = model_save_interval
         self.num_sgd_iter = num_sgd_iter
         self.clear_buffer_after_broadcast = clear_buffer_after_broadcast
         self.root_value_targets = root_value_targets

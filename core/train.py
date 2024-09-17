@@ -110,9 +110,10 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
             print("Broadcasting current model...")
             storage.set_weights.remote(model.get_weights())
             # storage.set_weights(model.get_weights())
-            torch.save(
-                model.state_dict(), os.path.join(log_dir, f"model_{train_step}.pt")
-            )
+            if train_step % config.model_save_interval == 0:
+                torch.save(
+                    model.state_dict(), os.path.join(log_dir, f"model_{train_step}.pt")
+                )
             if config.clear_buffer_after_broadcast:
                 replay_buffer.clear.remote()
                 # replay_buffer.clear()

@@ -5,3 +5,4 @@ results*
 __pycache__
 core/__pycache__
 wandb/
+nohup.out
