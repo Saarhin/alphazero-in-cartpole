@@ -1,0 +1,10 @@
+wandb: Currently logged in as: swang848 (irl-chip). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.18.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.6
+wandb: Run data is saved locally in /home/swang848/efficientalphazero/wandb/run-20240916_225830-bljx44ti
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run efficient-thunder-17
+wandb: ⭐️ View project at https://wandb.ai/irl-chip/MCTSplace
+wandb: 🚀 View run at https://wandb.ai/irl-chip/MCTSplace/runs/bljx44ti
+2024-09-16 22:58:32,705	INFO worker.py:1772 -- Started a local Ray instance. View the dashboard at [1m[32m127.0.0.1:8265 [39m[22m

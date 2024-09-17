@@ -47,7 +47,7 @@ class MCTSWorker:
         ):  # Initialize rolling windows for frame stacking
             obs, info = env.reset()
             mcts_windows[i].add(obs=obs["board_image"], env_state=env.get_state(), reward=None, action=None, info=info)
-
+            
         while not all(finished):
             # Prepare roots
             priors, values = self.model.compute_priors_and_values(

@@ -5,6 +5,7 @@ from statistics import mean, median
 
 import torch
 import ray
+import wandb
 
 from config.base import BaseConfig
 from core.pretrain import create_filled_demonstration_buffer
@@ -69,6 +70,19 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
         replay_buffer_size = ray.get(replay_buffer.size.remote())
         # replay_buffer_size = replay_buffer.size()
         print(f"{replay_buffer_size} num samples inside replay buffer...")
+        
+        if args.wandb and not args.debug:
+            data_size = args.num_rollout_workers * config.min_num_episodes_per_worker * 5 
+            transitionbuffer = ray.get(replay_buffer.get_transitions.remote())
+            rewards = transitionbuffer.rewards[train_step*data_size:(train_step+1)*data_size]
+            infos = transitionbuffer.infos[train_step*data_size:(train_step+1)*data_size]
+            dones = transitionbuffer.dones[train_step*data_size:(train_step+1)*data_size]
+            wirelength = [info['wirelength'] for info in infos]
+            rewards_at_done = [rewards[i] for i in range(len(rewards)) if dones[i]]
+            wirelength_at_done = [wirelength[i] for i in range(len(wirelength)) if dones[i]]
+            
+            wandb.log({"rollout/avg_end_of_episode_rewards": sum(rewards_at_done)/len(rewards_at_done),
+                       "rollout/avg_end_of_episode_wirelength": sum(wirelength_at_done)/len(wirelength_at_done),})   
 
         # Do optimization step
         total_losses, policy_losses, value_losses = [], [], []
@@ -106,6 +120,16 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
         rollout_worker_logs = ray.get(storage.pop_rollout_worker_logs.remote())
         # rollout_worker_logs = storage.pop_rollout_worker_logs()
 
+        if args.wandb and not args.debug:
+            wandb.log(
+                {
+                    "train/total_loss": mean(total_losses),
+                    "train/policy_loss": mean(policy_losses),
+                    "train/value_loss": mean(value_losses),
+                    "train/replay_buffer_size": replay_buffer_size,
+                }
+            )
+            
         summary_writer.add_scalar("train/total_loss", mean(total_losses), train_step)
         summary_writer.add_scalar("train/policy_loss", mean(policy_losses), train_step)
         summary_writer.add_scalar("train/value_loss", mean(value_losses), train_step)

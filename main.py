@@ -14,30 +14,25 @@ from core.test import test
 from config.base import BaseConfig
 
 if __name__ == "__main__":
-    print("Go!")
-    parser = ArgumentParser("AlphaZero implemented efficiently using Ray.")
+    parser = ArgumentParser("MCTS Place, GO")
     parser.add_argument("--env", type=str, default="Place-v0")
     parser.add_argument("--results_dir", default="results")
     parser.add_argument("--opr", default="train", type=str)
     parser.add_argument("--num_rollout_workers", default=4, type=int)
-    # parser.add_argument("--num_rollout_workers", default=1, type=int)
-    parser.add_argument("--num_cpus", default=8, type=float)
-    parser.add_argument("--num_gpus", default=0, type=float)
     parser.add_argument("--num_cpus_per_worker", default=4, type=float)
-    parser.add_argument("--num_gpus_per_worker", default=0, type=float)
+    parser.add_argument("--num_gpus_per_worker", default=0.2, type=float)
     parser.add_argument("--num_test_episodes", default=200, type=float)
     parser.add_argument("--model_path", default=None)
     # parser.add_argument(
     #     "--model_path",
     #     default="/home/swang848/efficientalphazero/results/cartpole_14082024_1540/model_latest.pt",
     # )
-    parser.add_argument("--device_workers", default="cpu", type=str)
-    parser.add_argument("--device_trainer", default="cpu", type=str)
+    parser.add_argument("--device_workers", default="cuda", type=str)
+    parser.add_argument("--device_trainer", default="cuda", type=str)
     parser.add_argument("--amp", action="store_true")
-    parser.add_argument("--wandb", default=False, type=bool)
-    parser.add_argument("--debug", default=True, type=bool)
+    parser.add_argument("--wandb", action="store_true")
+    parser.add_argument("--debug", action="store_true")
     parser.add_argument("--group_name", default="default", type=str)
-
     config_args = (
         []
     )  # Add config.base.BaseConfig constructor parameters to ArgumentParser
@@ -48,19 +43,23 @@ if __name__ == "__main__":
         config_args.append(arg)
     args = parser.parse_args()
 
+    print(args)
+
     if args.env == "Place-v0":
         from config.place import Config
     else:
         raise ValueError
-    
+
     sub_dir = datetime.now().strftime("%d%m%Y_%H%M")
     sub_dir = f"{args.env}_{sub_dir}"
     if args.debug:
         sub_dir = f"debug/{sub_dir}"
     log_dir = os.path.join(args.results_dir, sub_dir)
     summary_writer = SummaryWriter(log_dir, flush_secs=10)
-    
-    config = Config(env_seed=args.env_seed, log_dir=log_dir)  # Apply set BaseConfig arguments
+
+    config = Config(
+        env_seed=args.env_seed, log_dir=log_dir
+    )  # Apply set BaseConfig arguments
     for arg in config_args:
         arg_val = getattr(args, arg)
         if getattr(args, arg) is not None:
@@ -68,14 +67,10 @@ if __name__ == "__main__":
             setattr(config, arg, arg_val)
             print(f'Overwriting "{arg}" config entry with {arg_val}')
 
-    if not args.debug and args.wandb:
-        wandb.init(project="AlphaZero_Cartpole", group=args.group_name, config=config)
-    else:
-        pass
+    if args.wandb and not args.debug:
+        wandb.init(project="MCTSplace", group=args.group_name, config=config)
 
-    model = config.init_model(
-        args.device_trainer, args.amp, log_dir
-    )  # Create (and load) model
+    model = config.init_model(args.device_trainer, args.amp)  # Create (and load) model
     if args.model_path is not None:
         model.load_state_dict(torch.load(args.model_path))
 

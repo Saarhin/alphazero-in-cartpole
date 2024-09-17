@@ -262,6 +262,9 @@ class ReplayBuffer:
 
     def size(self) -> int:
         return len(self.transitions.obs)
+    
+    def get_transitions(self) -> TransitionBuffer:
+        return self.transitions
 
     def clear(self) -> None:
         self.transitions = TransitionBuffer()

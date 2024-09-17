@@ -7,18 +7,19 @@ import place_env
 
 
 class Config(BaseConfig):
-   
+
     def __init__(
         self,
-        training_steps: int = 20,
+        training_steps: int = 40,
         pretrain_steps: int = 0,
-        model_broadcast_interval: int = 5,
+        model_broadcast_interval: int = 1,
+        model_save_interval: int = 10,
         num_sgd_iter: int = 10,
         clear_buffer_after_broadcast: bool = False,
         root_value_targets: bool = False,
         replay_buffer_size: int = 50000,
         demo_buffer_size: int = 0,
-        batch_size: int = 512,
+        batch_size: int = 128,
         lr: float = 1e-3,
         max_grad_norm: float = 5,
         weight_decay: float = 1e-4,
@@ -31,9 +32,9 @@ class Config(BaseConfig):
         hash_nodes: bool = False,
         root_dirichlet_alpha: float = 1.5,
         root_exploration_fraction: float = 0.25,
-        num_simulations: int = 30,
-        num_envs_per_worker: int = 1,
-        min_num_episodes_per_worker: int = 2,
+        num_simulations: int = 50,
+        num_envs_per_worker: int = 4,
+        min_num_episodes_per_worker: int = 4,
         # min_num_episodes_per_worker: int = 8,
         use_dirichlet: bool = True,
         test_use_dirichlet: bool = False,
@@ -71,20 +72,19 @@ class Config(BaseConfig):
             test_use_dirichlet,
             value_support,
             value_transform,
-            env_seed, 
+            env_seed,
         )
         self.log_dir = log_dir
-        
-    def init_model(self, device, amp, log_dir=None):    
+
+    def init_model(self, device, amp):
         obs_shape = (self.obs_shape[0] * self.frame_stack,) + self.obs_shape[1:]
         num_act = self.action_shape
-        
+
         model = ResModel(self, obs_shape, num_act, device, amp)
         model.to(device)
         return model
-    
+
     def env_creator(self, log_dir=None):
         if log_dir is None:
             log_dir = self.log_dir
         return gym.make("Place-v0", log_dir=log_dir)
-        

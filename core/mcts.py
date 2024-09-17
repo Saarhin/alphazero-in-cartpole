@@ -43,10 +43,9 @@ class Node:
         self.expanded = True
 
     def add_exploration_noise(self, noise, exploration_fraction):
-        self.child_priors = (
-            self.child_priors * (1 - exploration_fraction)
-            + noise * exploration_fraction
-        )
+        self.child_priors = np.where(self.child_priors != 0, 
+                                     self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction, 
+                                     self.child_priors)
 
     def child_number_visits(self):
         return np.array([child.num_visits for _, child in self.children.items()])
@@ -92,8 +91,9 @@ class Node:
 
     def best_action(self, min_max_stats: MinMaxStats):
         score = self.puct_scores(min_max_stats)
-        max_val = np.max(score)
-        action = np.random.choice(np.argwhere(score == max_val).flatten())
+        masked_score = np.where(self.child_priors != 0, score, -np.inf)
+        max_val = np.max(masked_score)
+        action = np.random.choice(np.argwhere(masked_score == max_val).flatten())
         return action
 
     def best_child(self, min_max_stats):
@@ -250,7 +250,7 @@ class MCTS:
         for simulation_index in range(self.config.num_simulations):
             windows = deepcopy(mcts_windows)
             trajectories = roots.traverse(windows, min_max_stats)
-
+            
             dones = []
             leaf_nodes = []
             infos = []
@@ -288,7 +288,7 @@ class MCTS:
                     float(round(values[0], 4)),
                     min_max_stats[0],
                 )
-                breakpoint()
+            
             roots.backpropagate(
                 leaf_nodes, windows, values, priors, dones, infos, min_max_stats
             )
@@ -296,6 +296,6 @@ class MCTS:
                 from core.util import plot_tree
 
                 plot_tree(roots.roots[0], leaf_nodes[0], values[0], min_max_stats[0])
-                breakpoint()
+            
         self.env.close()
         return roots.get_distributions(), roots.get_values()

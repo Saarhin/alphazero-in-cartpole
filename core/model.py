@@ -151,7 +151,9 @@ class ResModel(BaseModel):
             value_targets = self.config.scalar_transform(value_targets)
         value_targets_phi = self.config.phi_transform(value_targets)
 
-        policy_loss = -(torch.log_softmax(masked_policy_logits, dim=1) * train_batch.mcts_policies).mean()
+        policy_loss = -(torch.log_softmax(masked_policy_logits, dim=1) * train_batch.mcts_policies)
+        infinite_value_mask = torch.isfinite(policy_loss).to(self.device)
+        policy_loss = policy_loss[infinite_value_mask].mean()
         value_loss = -(torch.log_softmax(value_logits, dim=1) * value_targets_phi).mean()
 
         # Update prios
