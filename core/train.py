@@ -72,7 +72,7 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
         print(f"{replay_buffer_size} num samples inside replay buffer...")
         
         if args.wandb and not args.debug:
-            data_size = args.num_rollout_workers * config.min_num_episodes_per_worker * 5 
+            data_size = args.num_rollout_workers * config.min_num_episodes_per_worker * 30
             transitionbuffer = ray.get(replay_buffer.get_transitions.remote())
             rewards = transitionbuffer.rewards[train_step*data_size:(train_step+1)*data_size]
             infos = transitionbuffer.infos[train_step*data_size:(train_step+1)*data_size]
