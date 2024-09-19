@@ -1,17 +1,6 @@
-import ray
-import sys
-from test2 import my_task, post_mortem
-# Add RAY_DEBUG environment variable to enable Ray Debugger
-ray.init(
-    runtime_env={
-        "env_vars": {"RAY_DEBUG": "1"},
-    }
-)
+import place_env
+import gym
 
-print(len(sys.argv))
-if len(sys.argv) == 1:
-    ray.get(my_task.remote(10))
-
-
-
-ray.get(post_mortem.remote(10))
+# env = gym.make("Place-v0", log_dir=None, simulator=False)
+# obs, info = env.reset()
+# print(info)

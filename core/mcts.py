@@ -297,5 +297,4 @@ class MCTS:
 
                 plot_tree(roots.roots[0], leaf_nodes[0], values[0], min_max_stats[0])
             
-        self.env.close()
         return roots.get_distributions(), roots.get_values()

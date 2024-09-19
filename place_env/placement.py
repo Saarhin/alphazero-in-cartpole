@@ -23,7 +23,7 @@ class Placement(gym.Env):
     pink = (205, 162, 190)
     orange = (255, 229, 153)
 
-    def __init__(self, log_dir, render_mode=None):
+    def __init__(self, log_dir, simulator=False, render_mode=None):
         # metadata = {"render.modes": ["human"]}
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -32,7 +32,7 @@ class Placement(gym.Env):
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.data_dir = os.path.join(self.base_dir, "..", "data")
         preprocess = Preprocess(
-            num_target_blocks=5, 
+            num_target_blocks=30, 
             pack_xml_path=os.path.join(self.data_dir, "tseng.net"), 
             block_infos_file_path=os.path.join(self.data_dir, "block.infos"),
             primitive_netlist_file_path=os.path.join(self.data_dir, "primitive.netlist"),
@@ -51,6 +51,7 @@ class Placement(gym.Env):
         self.height = preprocess.grid_height
         self.place_order = preprocess.place_order
         self.log_dir = log_dir
+        self.simulator = simulator
 
         # state and action space defination
         self.board_image = np.zeros((2, self.width, self.height), dtype=int)
@@ -122,7 +123,10 @@ class Placement(gym.Env):
             if reward == 0:
                 reward += 5
             self.num_episode += 1
-            (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
+            if self.simulator:
+                (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
+            else:
+                (wire_term, critical_path_delay, wirelength) = (0, 0, 0)
 
         self.cumulative_reward += 0.99**self.num_step_episode * reward
         self.num_step += 1
@@ -161,7 +165,11 @@ class Placement(gym.Env):
         self.place_infos = self.init_place_infos.copy()
         
         hpwl = self.calculate_hpwl()
-        (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
+        
+        if self.simulator:
+            (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
+        else:
+            (wire_term, critical_path_delay, wirelength) = (0, 0, 0)
         
         infos = {
             "placed_block": None,
@@ -224,8 +232,11 @@ class Placement(gym.Env):
         return hpwl_total
 
     def hpwl_reward(self, hpwl):
-        best_hpwl = 2733
-        max_hpwl = 3362
+        # best_hpwl = 2733
+        # max_hpwl = 3362
+        
+        best_hpwl = 2600
+        max_hpwl = 4900
 
         # scaled_reward = (best_hpwl_results - hpwl) / 1000
         normalized_reward = (1 - ((hpwl - best_hpwl) / (max_hpwl - best_hpwl))) * 1
@@ -260,11 +271,6 @@ class Placement(gym.Env):
     # for mcts simulation
     def get_state(self):           
         return deepcopy(self)
-    
-    def close(self):
-        gym.Env.close(self)
-        if os.path.exists(self.log_file_path):
-            shutil.rmtree(self.log_file_path)
     
     def _get_observation(self, block_index, coord_x, coord_y):
 
@@ -609,3 +615,6 @@ class Placement(gym.Env):
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
+            
+
+    

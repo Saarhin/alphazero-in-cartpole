@@ -85,7 +85,7 @@ class Config(BaseConfig):
         model.to(device)
         return model
 
-    def env_creator(self, log_dir=None):
+    def env_creator(self, simulator=False, log_dir=None):
         if log_dir is None:
             log_dir = self.log_dir
-        return gym.make("Place-v0", log_dir=log_dir)
+        return gym.make("Place-v0", log_dir=log_dir, simulator=simulator)
