@@ -54,7 +54,11 @@ if __name__ == "__main__":
     sub_dir = f"{args.env}_{sub_dir}"
     if args.debug:
         sub_dir = f"debug/{sub_dir}"
-    log_dir = os.path.join(args.results_dir, sub_dir)
+    if os.path.isabs(args.results_dir):
+        log_dir = os.path.join(args.results_dir, sub_dir)
+    else:
+        log_dir = os.path.join(os.getcwd(), args.results_dir, sub_dir)
+        
     summary_writer = SummaryWriter(log_dir, flush_secs=10)
 
     config = Config(

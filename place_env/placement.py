@@ -28,19 +28,22 @@ class Placement(gym.Env):
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
-        
+
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.data_dir = os.path.join(self.base_dir, "..", "data")
         preprocess = Preprocess(
-            num_target_blocks=30, 
-            pack_xml_path=os.path.join(self.data_dir, "tseng.net"), 
+            num_target_blocks=30,
+            pack_xml_path=os.path.join(self.data_dir, "tseng.net"),
             block_infos_file_path=os.path.join(self.data_dir, "block.infos"),
-            primitive_netlist_file_path=os.path.join(self.data_dir, "primitive.netlist"),
+            primitive_netlist_file_path=os.path.join(
+                self.data_dir, "primitive.netlist"
+            ),
             grid_constraint_path=os.path.join(self.data_dir, "grid.constraint"),
-            blocks_place_file_path=os.path.join(self.data_dir, "tseng.place"))   
-        
+            blocks_place_file_path=os.path.join(self.data_dir, "tseng.place"),
+        )
+
         truncate_step = preprocess.num_target_blocks
-        
+
         # chip information preprocess
         self.num_blocks = preprocess.num_target_blocks
         self.blocks_list = preprocess.blocks_list
@@ -52,6 +55,17 @@ class Placement(gym.Env):
         self.place_order = preprocess.place_order
         self.log_dir = log_dir
         self.simulator = simulator
+        if self.simulator:
+            # gurantee the simulator path is valid
+            self.log_file_path = os.path.join(
+                self.log_dir, str(random.randint(0, 9999))
+            )
+            if not os.path.exists(self.log_file_path):
+                os.makedirs(self.log_file_path)
+            place_path = os.path.join(self.data_dir, "tseng.place")
+            net_path = os.path.join(self.data_dir, "tseng.net")
+            shutil.copy2(place_path, os.path.join(self.log_file_path, "tseng.place"))
+            shutil.copy2(net_path, os.path.join(self.log_file_path, "tseng.net"))
 
         # state and action space defination
         self.board_image = np.zeros((2, self.width, self.height), dtype=int)
@@ -124,14 +138,16 @@ class Placement(gym.Env):
                 reward += 5
             self.num_episode += 1
             if self.simulator:
-                (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
+                (wire_term, critical_path_delay, wirelength) = self.call_simulator(
+                    self.place_coords, self.width
+                )
             else:
                 (wire_term, critical_path_delay, wirelength) = (0, 0, 0)
 
         self.cumulative_reward += 0.99**self.num_step_episode * reward
         self.num_step += 1
         self.num_step_episode += 1
-        
+
         infos = {
             "placed_block": block_index,
             "hpwl": hpwl,
@@ -163,14 +179,16 @@ class Placement(gym.Env):
         self.place_coords = self.init_place_coords.copy()
         self.board_image = self.init_board_image.copy()
         self.place_infos = self.init_place_infos.copy()
-        
+
         hpwl = self.calculate_hpwl()
-        
+
         if self.simulator:
-            (wire_term, critical_path_delay, wirelength) = self.call_simulator(self.place_coords, self.width)
+            (wire_term, critical_path_delay, wirelength) = self.call_simulator(
+                self.place_coords, self.width
+            )
         else:
             (wire_term, critical_path_delay, wirelength) = (0, 0, 0)
-        
+
         infos = {
             "placed_block": None,
             "hpwl": hpwl,
@@ -180,7 +198,7 @@ class Placement(gym.Env):
             "num_episode": self.num_episode,
             "action_mask": self.get_mask(),
         }
-        
+
         return {
             "board_image": self.board_image,
             "place_infos": self.place_infos,
@@ -234,7 +252,7 @@ class Placement(gym.Env):
     def hpwl_reward(self, hpwl):
         # best_hpwl = 2733
         # max_hpwl = 3362
-        
+
         best_hpwl = 2600
         max_hpwl = 4900
 
@@ -244,34 +262,27 @@ class Placement(gym.Env):
         normalized_reward = normalized_reward - 1
 
         return normalized_reward
-    
+
     def call_simulator(self, place_coords, width):
-        # gurantee the simulator path is valid
-        self.log_file_path = os.path.join(self.log_dir, str(random.randint(0, 9999)))
-        if not os.path.exists(self.log_file_path):
-            os.makedirs(self.log_file_path)
-        place_path = os.path.join(self.data_dir, "tseng.place")
-        net_path = os.path.join(self.data_dir, "tseng.net")     
-        shutil.copy2(place_path, os.path.join(self.log_file_path, "tseng.place"))
-        shutil.copy2(net_path, os.path.join(self.log_file_path, "tseng.net"))
-        
         fill_place_file(
-                place_coords,
-                width,
-                os.path.join(self.log_file_path, "tseng.place"),
-            )
-        (wire_term, critical_path_delay, wirelength) = self.episode_reward(self.log_file_path)
+            place_coords,
+            width,
+            os.path.join(self.log_file_path, "tseng.place"),
+        )
+        (wire_term, critical_path_delay, wirelength) = self.episode_reward(
+            self.log_file_path
+        )
         return wire_term, critical_path_delay, wirelength
-    
+
     # for mcts simulation
     def set_state(self, state):
         self = deepcopy(state)
         return self
-    
+
     # for mcts simulation
-    def get_state(self):           
+    def get_state(self):
         return deepcopy(self)
-    
+
     def _get_observation(self, block_index, coord_x, coord_y):
 
         current_block_coord_x = self.place_coords[block_index][0]
@@ -615,6 +626,3 @@ class Placement(gym.Env):
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
-            
-
-    

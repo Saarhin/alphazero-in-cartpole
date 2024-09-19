@@ -27,7 +27,7 @@ class MCTSWorker:
         self.use_dirichlet = use_dirichlet
 
         self.envs = [config.env_creator(simulator=True) for _ in range(self.num_envs)]
-        self.env_observation_space = self.envs[0].observation_space['board_image']
+        self.env_observation_space = self.envs[0].observation_space["board_image"]
         self.env_action_space = self.envs[0].action_space
 
     def collect(self):
@@ -45,9 +45,16 @@ class MCTSWorker:
         for i, env in enumerate(
             self.envs
         ):  # Initialize rolling windows for frame stacking
+            breakpoint()
             obs, info = env.reset()
-            mcts_windows[i].add(obs=obs["board_image"], env_state=env.get_state(), reward=None, action=None, info=info)
-            
+            mcts_windows[i].add(
+                obs=obs["board_image"],
+                env_state=env.get_state(),
+                reward=None,
+                action=None,
+                info=info,
+            )
+
         while not all(finished):
             # Prepare roots
             priors, values = self.model.compute_priors_and_values(
@@ -93,11 +100,11 @@ class MCTSWorker:
                 )
                 # action = np.random.choice(range(self.env_action_space.n), p=mcts_policy)  # We could also sample instead of maxing
                 actions.append(action)
-                
+
                 obs, reward, done, info = self.envs[env_index].step(
                     action
                 )  # Apply action
-                
+
                 transition_buffers[env_index].add_one(  # Add experience to data storage
                     mcts_windows[
                         env_index
@@ -117,7 +124,7 @@ class MCTSWorker:
                 # TODO: obs vs mcts_window obs
 
                 mcts_windows[env_index].add(
-                    obs['board_image'],
+                    obs["board_image"],
                     self.envs[env_index].get_state(),
                     reward=reward,
                     action=action,
@@ -164,13 +171,13 @@ class RolloutWorker(MCTSWorker):
         self.storage = storage
 
     def run(self):
-        
+
         while True:  # Wait for start signal
             if not ray.get(self.storage.get_start_signal.remote()):
                 time.sleep(1)
                 continue
             break
-        
+
         collect_update_step = -1
         while True:
             # Check if training finished
