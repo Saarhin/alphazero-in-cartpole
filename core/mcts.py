@@ -216,7 +216,8 @@ class BatchTree:
             accu = max if self.config.max_reward_return else sum
 
             while True:
-                node.value_sum += value
+                # node.value_sum += value
+                node.value_sum = (node.num_visits * node.value_sum + value) / (node.num_visits + 1)
                 node.num_visits += 1
                 min_max_stats[i].update(node.mean_value())
 

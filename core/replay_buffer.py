@@ -104,7 +104,7 @@ class TransitionBuffer:
             getattr(self, f.name).extend(getattr(sample_batch, f.name))
 
     def augment_value_targets(self, accum):
-        ret = 0.0
+        ret = self.rewards[-1]
         for i in reversed(range(self.size())):
             self.value_targets[i] = ret
             ret = accum([ret, self.rewards[i]])

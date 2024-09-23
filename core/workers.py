@@ -45,7 +45,6 @@ class MCTSWorker:
         for i, env in enumerate(
             self.envs
         ):  # Initialize rolling windows for frame stacking
-            breakpoint()
             obs, info = env.reset()
             mcts_windows[i].add(
                 obs=obs["board_image"],
