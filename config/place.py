@@ -10,7 +10,7 @@ class Config(BaseConfig):
 
     def __init__(
         self,
-        training_steps: int = 40,
+        training_steps: int = 10,
         pretrain_steps: int = 0,
         model_broadcast_interval: int = 1,
         model_save_interval: int = 5,
@@ -40,7 +40,6 @@ class Config(BaseConfig):
         test_use_dirichlet: bool = False,
         value_support: DiscreteSupport = DiscreteSupport(0, 22, 1.0),
         value_transform: bool = True,
-        env_seed: int = None,
         log_dir: str = None,
     ):
         super().__init__(
@@ -73,7 +72,6 @@ class Config(BaseConfig):
             test_use_dirichlet,
             value_support,
             value_transform,
-            env_seed,
         )
         self.log_dir = log_dir
 

@@ -37,7 +37,6 @@ class BaseConfig:
             test_use_dirichlet: bool,  # Whether to use Dirichlet noise during testing
             value_support: DiscreteSupport,  # See muZero paper
             value_transform: bool,  # See muZero paper
-            env_seed: int,
     ):
         self.training_steps = training_steps
         self.pretrain_steps = pretrain_steps
@@ -72,8 +71,6 @@ class BaseConfig:
 
         self.value_support = value_support
         self.value_transform = value_transform
-
-        self.env_seed = env_seed
 
         self._action_shape = None
         self._obs_shape = None

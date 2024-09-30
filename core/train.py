@@ -72,7 +72,7 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
         print(f"{replay_buffer_size} num samples inside replay buffer...")
         
         if args.wandb and not args.debug:
-            data_size = args.num_rollout_workers * config.min_num_episodes_per_worker * 30
+            data_size = args.num_rollout_workers * config.min_num_episodes_per_worker * 5
             transitionbuffer = ray.get(replay_buffer.get_transitions.remote())
             rewards = transitionbuffer.rewards[train_step*data_size:(train_step+1)*data_size]
             infos = transitionbuffer.infos[train_step*data_size:(train_step+1)*data_size]
@@ -82,7 +82,7 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
             wirelength_at_done = [wirelength[i] for i in range(len(wirelength)) if dones[i]]
             
             wandb.log({"rollout/avg_end_of_episode_rewards": sum(rewards_at_done)/len(rewards_at_done),
-                       "rollout/avg_end_of_episode_wirelength": sum(wirelength_at_done)/len(wirelength_at_done),})   
+                       "rollout/avg_end_of_episode_wirelength": sum(wirelength_at_done)/len(wirelength_at_done),}, step=train_step)   
 
         # Do optimization step
         total_losses, policy_losses, value_losses = [], [], []
@@ -128,7 +128,7 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
                     "train/policy_loss": mean(policy_losses),
                     "train/value_loss": mean(value_losses),
                     "train/replay_buffer_size": replay_buffer_size,
-                }
+                }, step=train_step
             )
             
         summary_writer.add_scalar("train/total_loss", mean(total_losses), train_step)

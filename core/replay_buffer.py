@@ -256,7 +256,7 @@ class ReplayBuffer:
         num_drop = self.transitions.size() - self.size
         if num_drop > 0:
             self.transitions.drop_first_n(num_drop)
-
+            
     def sample(self, batch_size, frame_stack) -> Tuple[TrainingBatch, np.ndarray]:
         return self.transitions.sample_training_batch(batch_size, frame_stack)
 

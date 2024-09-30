@@ -6,6 +6,9 @@ import os
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import wandb
+import gym
+import numpy as np
+import random
 from datetime import datetime
 
 from core.pretrain import pretrain
@@ -13,6 +16,13 @@ from core.train import train
 from core.test import test
 from config.base import BaseConfig
 
+def set_seed(seed):
+    random.seed(seed) 
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    
 if __name__ == "__main__":
     parser = ArgumentParser("MCTS Place, GO")
     parser.add_argument("--env", type=str, default="Place-v0")
@@ -33,6 +43,7 @@ if __name__ == "__main__":
     parser.add_argument("--wandb", action="store_true")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--group_name", default="default", type=str)
+    parser.add_argument("--seed", default=0, type=int)
     config_args = (
         []
     )  # Add config.base.BaseConfig constructor parameters to ArgumentParser
@@ -44,6 +55,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print(args)
+    
+    set_seed(args.seed)
 
     if args.env == "Place-v0":
         from config.place import Config
@@ -62,7 +75,7 @@ if __name__ == "__main__":
     summary_writer = SummaryWriter(log_dir, flush_secs=10)
 
     config = Config(
-        env_seed=args.env_seed, log_dir=log_dir
+        log_dir=log_dir
     )  # Apply set BaseConfig arguments
     for arg in config_args:
         arg_val = getattr(args, arg)
