@@ -22,6 +22,7 @@ class SharedStorage:
 
         self.rollout_worker_log = {}
         self.test_worker_log = {}
+        self.wandb_log = {}
         self.test_train_step = -1
         self.workers_finished = 0
 
@@ -52,6 +53,14 @@ class SharedStorage:
     def get_workers_finished(self):
         return self.workers_finished
 
+    def add_wandb_logs(self, log_dict):
+        add_logs(log_dict, self.wandb_log)
+    
+    def pop_wandb_logs(self):
+        logs = self.wandb_log
+        self.wandb_log = {}
+        return logs
+        
     def add_rollout_worker_logs(self, log_dict):
         add_logs(log_dict, self.rollout_worker_log)
 

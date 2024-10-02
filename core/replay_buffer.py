@@ -228,7 +228,15 @@ class TransitionBuffer:
                 else:
                     stats[k].append(v)
         return stats
-
+    
+    @staticmethod
+    def compute_wandb_buffers(buffers: List["TransitionBuffer"]):
+        stats = {"end_of_episode_rewards": [], "end_of_episode_wirelength": []}   
+        for buffer in buffers:
+            stats["end_of_episode_rewards"].append(buffer.rewards[-1])
+            stats["end_of_episode_wirelength"].append(buffer.infos[-1]["wirelength"])
+        return stats
+        
     def update_priorities(self, batch_indices, new_priorities):
         for i, prio in enumerate(new_priorities):
             self.priorities[batch_indices[i]] = prio

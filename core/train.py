@@ -68,22 +68,8 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
             break
 
         replay_buffer_size = ray.get(replay_buffer.size.remote())
-        # replay_buffer_size = replay_buffer.size()
         print(f"{replay_buffer_size} num samples inside replay buffer...")
-        
-        if args.wandb and not args.debug:
-            data_size = args.num_rollout_workers * config.min_num_episodes_per_worker * 5
-            transitionbuffer = ray.get(replay_buffer.get_transitions.remote())
-            rewards = transitionbuffer.rewards[train_step*data_size:(train_step+1)*data_size]
-            infos = transitionbuffer.infos[train_step*data_size:(train_step+1)*data_size]
-            dones = transitionbuffer.dones[train_step*data_size:(train_step+1)*data_size]
-            wirelength = [info['wirelength'] for info in infos]
-            rewards_at_done = [rewards[i] for i in range(len(rewards)) if dones[i]]
-            wirelength_at_done = [wirelength[i] for i in range(len(wirelength)) if dones[i]]
-            
-            wandb.log({"rollout/avg_end_of_episode_rewards": sum(rewards_at_done)/len(rewards_at_done),
-                       "rollout/avg_end_of_episode_wirelength": sum(wirelength_at_done)/len(wirelength_at_done),}, step=train_step)   
-
+    
         # Do optimization step
         total_losses, policy_losses, value_losses = [], [], []
         print("Updating weights...")
@@ -109,26 +95,27 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
         if train_step % config.model_broadcast_interval == 0:
             print("Broadcasting current model...")
             storage.set_weights.remote(model.get_weights())
-            # storage.set_weights(model.get_weights())
             if train_step % config.model_save_interval == 0:
                 torch.save(
                     model.state_dict(), os.path.join(log_dir, f"model_{train_step}.pt")
                 )
             if config.clear_buffer_after_broadcast:
                 replay_buffer.clear.remote()
-                # replay_buffer.clear()
 
         rollout_worker_logs = ray.get(storage.pop_rollout_worker_logs.remote())
-        # rollout_worker_logs = storage.pop_rollout_worker_logs()
+        wandb_logs = ray.get(storage.pop_wandb_logs.remote())
 
         if args.wandb and not args.debug:
+            print(wandb_logs)
             wandb.log(
-                {
+                {  
+                    "rollout/avg_end_of_episode_rewards": mean(wandb_logs["end_of_episode_rewards"]),
+                    "rollout/avg_end_of_episode_wirelength": mean(wandb_logs["end_of_episode_wirelength"]),
                     "train/total_loss": mean(total_losses),
                     "train/policy_loss": mean(policy_losses),
                     "train/value_loss": mean(value_losses),
                     "train/replay_buffer_size": replay_buffer_size,
-                }, step=train_step
+                }
             )
             
         summary_writer.add_scalar("train/total_loss", mean(total_losses), train_step)
@@ -144,8 +131,6 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
 
         storage.reset_workers_finished.remote()
         storage.incr_counter.remote()
-        # storage.reset_workers_finished()
-        # storage.incr_counter()
 
     ray.wait(workers)
     print("Training finished!")

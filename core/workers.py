@@ -103,6 +103,11 @@ class MCTSWorker:
                 obs, reward, done, info = self.envs[env_index].step(
                     action
                 )  # Apply action
+                
+                # if self.config.root_value_targets:
+                #     value_target = reward + self.config.gamma*root_values[env_index]*done
+                # else:
+                #     value_target = root_values[env_index]
 
                 transition_buffers[env_index].add_one(  # Add experience to data storage
                     mcts_windows[
@@ -181,7 +186,6 @@ class RolloutWorker(MCTSWorker):
         while True:
             # Check if training finished
             update_step = ray.get(self.storage.get_counter.remote())
-            # update_step = self.storage.get_counter()
             if update_step >= self.config.training_steps:
                 time.sleep(30)
                 break
@@ -192,7 +196,6 @@ class RolloutWorker(MCTSWorker):
 
             # Update weights
             model_weights = ray.get(self.storage.get_weights.remote())
-            # model_weights = self.storage.get_weights()
             self.model.set_weights(model_weights)
 
             # Collect data
@@ -202,14 +205,13 @@ class RolloutWorker(MCTSWorker):
 
             # Add episode data to replay buffer and stats to storage
             stats = TransitionBuffer.compute_stats_buffers(transition_buffers)
+            wandb_stats = TransitionBuffer.compute_wandb_buffers(transition_buffers)
+            self.storage.add_wandb_logs.remote(wandb_stats)
             self.storage.add_rollout_worker_logs.remote(stats)
             self.replay_buffer.add.remote(transition_buffers)
-            # self.storage.add_rollout_worker_logs(stats)
-            # self.replay_buffer.add(transition_buffers)
 
             collect_update_step = update_step
             self.storage.incr_workers_finished.remote()
-            # self.storage.incr_workers_finished()
 
 
 @ray.remote
