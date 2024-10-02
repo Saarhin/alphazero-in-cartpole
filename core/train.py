@@ -84,12 +84,13 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
             #    demo_batch, _ = ray.get(demonstration_buffer.sample.remote(int(config.batch_size * 0.3), config.frame_stack))
             #    train_batch.fuse_inplace(demo_batch)
 
-            total_loss, policy_loss, value_loss = model.update_weights(
-                train_batch, optimizer, scaler, scheduler
-            )
-            total_losses.append(total_loss.item())
-            policy_losses.append(policy_loss.item())
-            value_losses.append(value_loss.item())
+            for mini_batch in train_batch:
+                total_loss, policy_loss, value_loss = model.update_weights(
+                    mini_batch, optimizer, scaler, scheduler
+                )
+                total_losses.append(total_loss.item())
+                policy_losses.append(policy_loss.item())
+                value_losses.append(value_loss.item())
 
         # Broadcast weights
         if train_step % config.model_broadcast_interval == 0:

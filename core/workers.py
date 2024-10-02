@@ -104,10 +104,10 @@ class MCTSWorker:
                     action
                 )  # Apply action
                 
-                # if self.config.root_value_targets:
-                #     value_target = reward + self.config.gamma*root_values[env_index]*done
-                # else:
-                #     value_target = root_values[env_index]
+                if self.config.root_value_targets:
+                    value_target = reward + self.config.gamma*root_values[env_index]*done
+                else:
+                    value_target = root_values[env_index]
 
                 transition_buffers[env_index].add_one(  # Add experience to data storage
                     mcts_windows[
@@ -117,7 +117,7 @@ class MCTSWorker:
                     done,
                     info,
                     mcts_policy,
-                    root_values[env_index],
+                    value_target,
                     mcts_windows[env_index].env_state,
                     1.0,  # TODO
                 )

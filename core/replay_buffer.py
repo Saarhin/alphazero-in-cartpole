@@ -6,6 +6,7 @@ from typing import List, Dict, Any, Optional, Union, Tuple
 import numpy as np
 from scipy.stats import entropy
 import torch
+from torch.utils.data import BatchSampler, SubsetRandomSampler
 import ray
 
 
@@ -150,44 +151,46 @@ class TransitionBuffer:
 
     def sample_training_batch(
         self, batch_size: int, frame_stack: int
-    ) -> Tuple[TrainingBatch, np.ndarray]:
+    ) -> Tuple[List["TrainingBatch"], List[np.ndarray]]:
         if batch_size > self.size():
             print("Warning: trying to sample more samples than in transition buffer!")
-
+        
         alpha = 1.0
         probs = np.array(self.priorities) ** alpha
         probs /= probs.sum()
-        sample_indices = np.random.choice(
-            range(self.size()), min(batch_size, self.size()), p=probs
-        )
-
-        train_batch_args = []
-        for f in fields(TrainingBatch):
-            field_name = f.name
-            if field_name == "action_mask":
-                samples = getattr(self, "infos") # action mask is stored in infos
-            else:
-                samples = getattr(self, field_name)  # [sample_indices]
-                
-            if field_name == "obs":  # We frame-stack obs
-                samples = list(
-                    map(
-                        lambda i: self.frame_stack_at_index(i, "obs", frame_stack),
-                        sample_indices,
+        
+        train_batch_list = []
+        sample_indices_list = []
+        for mini_batch_indices in BatchSampler(SubsetRandomSampler(range(self.size())), batch_size=batch_size, drop_last=False):
+            train_batch_args = []
+            for f in fields(TrainingBatch):
+                field_name = f.name
+                if field_name == "action_mask":
+                    samples = getattr(self, "infos") # action mask is stored in infos
+                else:
+                    samples = getattr(self, field_name)  # [sample_indices]
+                    
+                if field_name == "obs":  # We frame-stack obs
+                    samples = list(
+                        map(
+                            lambda i: self.frame_stack_at_index(i, "obs", frame_stack),
+                            mini_batch_indices,
+                        )
                     )
-                )
-            elif field_name == "action_mask":
-                samples = list(map(lambda i: samples[i]["action_mask"], sample_indices))
-            else:
-                samples = list(map(lambda i: samples[i], sample_indices))
+                elif field_name == "action_mask":
+                    samples = list(map(lambda i: samples[i]["action_mask"], mini_batch_indices))
+                else:
+                    samples = list(map(lambda i: samples[i], mini_batch_indices))
 
-            if field_name != "infos":
-                samples = np.array(samples)
+                if field_name != "infos":
+                    samples = np.array(samples)
 
-            train_batch_args.append(samples)
-
-        return TrainingBatch(*train_batch_args), sample_indices
-
+                train_batch_args.append(samples)
+            train_batch_list.append(TrainingBatch(*train_batch_args))
+            sample_indices_list.append(mini_batch_indices)
+        
+        return train_batch_list, sample_indices_list  
+    
     @staticmethod
     def fuse_buffers(buffers: List["TransitionBuffer"]):
         fused_buffer = TransitionBuffer()
