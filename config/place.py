@@ -10,7 +10,7 @@ class Config(BaseConfig):
 
     def __init__(
         self,
-        training_steps: int = 5,
+        training_steps: int = 20,
         pretrain_steps: int = 0,
         model_broadcast_interval: int = 1,
         model_save_interval: int = 5,
@@ -38,7 +38,7 @@ class Config(BaseConfig):
         # min_num_episodes_per_worker: int = 8,
         use_dirichlet: bool = True,
         test_use_dirichlet: bool = False,
-        value_support: DiscreteSupport = DiscreteSupport(0, 22, 1.0),
+        value_support: DiscreteSupport = DiscreteSupport(-20, 10, 1.0),
         value_transform: bool = True,
         log_dir: str = None,
     ):

@@ -154,5 +154,3 @@ class BaseConfig:
         output[nan_part] = 0.
         output[torch.abs(output) < epsilon] = 0.
         return output
-
-

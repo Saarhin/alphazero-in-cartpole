@@ -32,7 +32,7 @@ class Placement(gym.Env):
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.data_dir = os.path.join(self.base_dir, "..", "data")
         preprocess = Preprocess(
-            num_target_blocks=5,
+            num_target_blocks=30,
             pack_xml_path=os.path.join(self.data_dir, "tseng.net"),
             block_infos_file_path=os.path.join(self.data_dir, "block.infos"),
             primitive_netlist_file_path=os.path.join(
@@ -250,11 +250,11 @@ class Placement(gym.Env):
         return hpwl_total
 
     def hpwl_reward(self, hpwl):
-        best_hpwl = 2733
-        max_hpwl = 3362
+        # best_hpwl = 2733
+        # max_hpwl = 3362
 
-        # best_hpwl = 2600
-        # max_hpwl = 4900
+        best_hpwl = 2600
+        max_hpwl = 4900
 
         # scaled_reward = (best_hpwl_results - hpwl) / 1000
         normalized_reward = (1 - ((hpwl - best_hpwl) / (max_hpwl - best_hpwl))) * 1
