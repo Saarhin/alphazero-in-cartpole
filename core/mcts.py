@@ -214,7 +214,8 @@ class BatchTree:
             # Define return accumulation function. For vanilla RL, we use R_t = r_t + gamma R_(t+1)
             # If `config.max_reward_return`, R_t = max(r_t, R_(t_1))
             accu = max if self.config.max_reward_return else sum
-
+            if terminal:
+                value = 0.0
             while True:
                 node.value_sum += value
                 # node.value_sum = (node.num_visits * node.value_sum + value) / (node.num_visits + 1)
