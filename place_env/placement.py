@@ -23,7 +23,7 @@ class Placement(gym.Env):
     pink = (205, 162, 190)
     orange = (255, 229, 153)
 
-    def __init__(self, log_dir, simulator=False, render_mode=None):
+    def __init__(self, log_dir, simulator=False, render_mode=None, num_target_blocks=30):
         # metadata = {"render.modes": ["human"]}
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -32,7 +32,7 @@ class Placement(gym.Env):
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.data_dir = os.path.join(self.base_dir, "..", "data")
         preprocess = Preprocess(
-            num_target_blocks=30,
+            num_target_blocks=num_target_blocks,
             pack_xml_path=os.path.join(self.data_dir, "tseng.net"),
             block_infos_file_path=os.path.join(self.data_dir, "block.infos"),
             primitive_netlist_file_path=os.path.join(

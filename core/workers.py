@@ -26,7 +26,7 @@ class MCTSWorker:
         self.num_envs = num_envs
         self.use_dirichlet = use_dirichlet
 
-        self.envs = [config.env_creator(simulator=True) for _ in range(self.num_envs)]
+        self.envs = [config.env_creator(simulator=True, num_target_blocks=config.num_target_blocks) for _ in range(self.num_envs)]
         self.env_observation_space = self.envs[0].observation_space["board_image"]
         self.env_action_space = self.envs[0].action_space
 

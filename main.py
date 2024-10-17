@@ -14,7 +14,7 @@ from datetime import datetime
 from core.pretrain import pretrain
 from core.train import train
 from core.test import test
-from config.base import BaseConfig
+from config.place import Config
 
 def set_seed(seed):
     random.seed(seed) 
@@ -28,9 +28,9 @@ if __name__ == "__main__":
     parser.add_argument("--env", type=str, default="Place-v0")
     parser.add_argument("--results_dir", default="results")
     parser.add_argument("--opr", default="train", type=str)
-    parser.add_argument("--num_rollout_workers", default=4, type=int)
-    parser.add_argument("--num_cpus_per_worker", default=4, type=float)
-    parser.add_argument("--num_gpus_per_worker", default=0.2, type=float)
+    parser.add_argument("--num_rollout_workers", default=8, type=int)
+    parser.add_argument("--num_cpus_per_worker", default=2, type=float)
+    parser.add_argument("--num_gpus_per_worker", default=0.12, type=float)
     parser.add_argument("--num_test_episodes", default=200, type=float)
     parser.add_argument("--model_path", default=None)
     # parser.add_argument(
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     config_args = (
         []
     )  # Add config.base.BaseConfig constructor parameters to ArgumentParser
-    for arg, type_hint in typing.get_type_hints(BaseConfig.__init__).items():
+    for arg, type_hint in typing.get_type_hints(Config.__init__).items():
         if type_hint not in [int, float, str, bool]:
             continue
         parser.add_argument(f"--{arg}", default=None, required=False, type=type_hint)
@@ -57,11 +57,6 @@ if __name__ == "__main__":
     print(args)
     
     set_seed(args.seed)
-
-    if args.env == "Place-v0":
-        from config.place import Config
-    else:
-        raise ValueError
 
     sub_dir = datetime.now().strftime("%d%m%Y_%H%M")
     sub_dir = f"{args.env}_{sub_dir}"
@@ -77,13 +72,15 @@ if __name__ == "__main__":
     config = Config(
         log_dir=log_dir
     )  # Apply set BaseConfig arguments
+    
     for arg in config_args:
         arg_val = getattr(args, arg)
         if getattr(args, arg) is not None:
             # TODO: use_dirichlet (or bool arguments in general) do not seem to work properly
             setattr(config, arg, arg_val)
             print(f'Overwriting "{arg}" config entry with {arg_val}')
-
+            
+    config.replay_buffer_size = args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 4
     if args.wandb and not args.debug:
         wandb.init(project="MCTSplace", group=args.group_name, config=config)
 
