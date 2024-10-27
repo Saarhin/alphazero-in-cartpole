@@ -29,8 +29,7 @@ class Placement(gym.Env):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
 
-        self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.data_dir = os.path.join(self.base_dir, "..", "data")
+        self.data_dir = os.path.join(EDA_ROOT, "data")
         preprocess = Preprocess(
             num_target_blocks=num_target_blocks,
             pack_xml_path=os.path.join(self.data_dir, "tseng.net"),

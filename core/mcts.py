@@ -82,12 +82,12 @@ class Node:
         # p. 17, Section "Search"
         c_base = self.config.c_base
         c_init = self.config.c_init
-        c_term = (np.log(1 + self.num_visits + c_base) / c_base) + c_init
+        c_term = np.log((1 + self.num_visits + c_base) / c_base) + c_init
         visit_term = np.sqrt(self.num_visits) / (self.child_number_visits() + 1)
 
-        exploration = c_term * visit_term * self.child_priors
-        value = self.child_values(min_max_stats)
-        return value + exploration
+        prior_score = c_term * visit_term * self.child_priors
+        value_score = self.child_values(min_max_stats)
+        return value_score + prior_score
 
     def best_action(self, min_max_stats: MinMaxStats):
         score = self.puct_scores(min_max_stats)
