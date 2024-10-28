@@ -18,7 +18,7 @@ export data=$SLURM_TMPDIR/data
 
 module load python/3.10
 module load cuda
-source /home/shang8/scratch/FPGA_env/bin/activate
+source /home/shang8/scratch/MCTS_env/bin/activate
 wandb offline
 
 python3 main.py --wandb --amp --cc --group_name c5b --seed 0 \
