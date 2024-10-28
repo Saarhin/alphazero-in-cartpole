@@ -12,7 +12,6 @@ from core.preprocess import Preprocess
 import numpy as np
 import pygame
 
-EDA_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 class Placement(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
     black = (0, 0, 0)
@@ -29,16 +28,20 @@ class Placement(gym.Env):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
 
-        self.data_dir = os.path.join(EDA_ROOT, "data")
+        # In CC, the data path saved in the local disk is set in the environment variable.
+        if 'data' in os.environ:
+            data_dir = os.environ['data']
+        else:
+            data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
         preprocess = Preprocess(
             num_target_blocks=num_target_blocks,
-            pack_xml_path=os.path.join(self.data_dir, "tseng.net"),
-            block_infos_file_path=os.path.join(self.data_dir, "block.infos"),
+            pack_xml_path=os.path.join(data_dir, "tseng.net"),
+            block_infos_file_path=os.path.join(data_dir, "block.infos"),
             primitive_netlist_file_path=os.path.join(
-                self.data_dir, "primitive.netlist"
+                data_dir, "primitive.netlist"
             ),
-            grid_constraint_path=os.path.join(self.data_dir, "grid.constraint"),
-            blocks_place_file_path=os.path.join(self.data_dir, "tseng.place"),
+            grid_constraint_path=os.path.join(data_dir, "grid.constraint"),
+            blocks_place_file_path=os.path.join(data_dir, "tseng.place"),
         )
 
         truncate_step = preprocess.num_target_blocks
@@ -61,8 +64,8 @@ class Placement(gym.Env):
             )
             if not os.path.exists(self.log_file_path):
                 os.makedirs(self.log_file_path)
-            place_path = os.path.join(self.data_dir, "tseng.place")
-            net_path = os.path.join(self.data_dir, "tseng.net")
+            place_path = os.path.join(data_dir, "tseng.place")
+            net_path = os.path.join(data_dir, "tseng.net")
             shutil.copy2(place_path, os.path.join(self.log_file_path, "tseng.place"))
             shutil.copy2(net_path, os.path.join(self.log_file_path, "tseng.net"))
 
@@ -92,7 +95,7 @@ class Placement(gym.Env):
         self.cumulative_reward = 0
         self.place_coords = np.full((len(self.blocks_list), 2), -1)
         self.init_board_image, self.init_place_infos, self.init_place_coords = (
-            self._place_initial_blocks()
+            self._place_initial_blocks(optimized_file=os.path.join(data_dir, "optimized.place"))
         )
 
         # render
@@ -249,11 +252,13 @@ class Placement(gym.Env):
         return hpwl_total
 
     def hpwl_reward(self, hpwl):
-        # best_hpwl = 2733
-        # max_hpwl = 3362
+        # 5 blocks hpwl range
+        best_hpwl = 2733
+        max_hpwl = 3362
 
-        best_hpwl = 2600
-        max_hpwl = 4900
+        # 30 blocks hpwl range
+        # best_hpwl = 2600
+        # max_hpwl = 4900
 
         # scaled_reward = (best_hpwl_results - hpwl) / 1000
         normalized_reward = (1 - ((hpwl - best_hpwl) / (max_hpwl - best_hpwl))) * 1
@@ -343,7 +348,7 @@ class Placement(gym.Env):
 
         return self.board_image.copy(), self.place_infos.copy()
 
-    def _place_initial_blocks(self, seed=0):
+    def _place_initial_blocks(self, optimized_file, seed=0):
         """CXB experiment"""
         self.place_coords = np.full((len(self.blocks_list), 2), -1)
         self.board_image = np.zeros(
@@ -353,10 +358,9 @@ class Placement(gym.Env):
             self.observation_space["place_infos"].shape, -1, dtype=int
         )
         # place the initial blocks
-        file_path = os.path.join(EDA_ROOT, "data", "optimized.place")
         swappable_positions = [[], []]
         valid_positions = self.grid_constraints_dict["clb"].copy()
-        with open(file_path, "r") as file:
+        with open(optimized_file, "r") as file:
             for index, line in enumerate(file.readlines()):
                 if index >= self.num_blocks + 5:
                     line_split = line.strip().split()
@@ -518,7 +522,6 @@ class Placement(gym.Env):
             --route --route_chan_width 100 --analysis"
         )
         output = stream.read()
-        os.chdir(EDA_ROOT)
 
         wirelength = int(
             re.search(".*Total wirelength: (.*), average net length:", output).groups()[

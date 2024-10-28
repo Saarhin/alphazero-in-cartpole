@@ -104,11 +104,14 @@ class TransitionBuffer:
         for f in fields(self):
             getattr(self, f.name).extend(getattr(sample_batch, f.name))
 
-    def augment_value_targets(self, accum):
+    def augment_value_targets(self, accum, gamma):
         ret = self.rewards[-1]
         for i in reversed(range(self.size())):
             self.value_targets[i] = ret
-            ret = accum([ret, self.rewards[i]])
+            if i > 0:
+                ret = accum([gamma*ret, self.rewards[i-1]])
+            else:
+                pass
 
     def add_one(
         self, obs, reward, done, info, mcts_policy, value_target, env_state, priority

@@ -11,7 +11,7 @@ class Config(BaseConfig):
     def __init__(
         self,
         num_target_blocks: int = 30,
-        training_steps: int = 50,
+        training_steps: int = 15,
         pretrain_steps: int = 0,
         model_broadcast_interval: int = 1,
         model_save_interval: int = 5,
@@ -25,7 +25,7 @@ class Config(BaseConfig):
         max_grad_norm: float = 5,
         weight_decay: float = 1e-4,
         momentum: float = 0.9,
-        c_init: float = 4.25,
+        c_init: float = 3,
         c_base: float = 19652,
         gamma: float = 0.997,
         frame_stack: int = 5,
@@ -33,13 +33,12 @@ class Config(BaseConfig):
         hash_nodes: bool = False,
         root_dirichlet_alpha: float = 1.5,
         root_exploration_fraction: float = 0.25,
-        num_simulations: int = 50,
+        num_simulations: int = 15,
         num_envs_per_worker: int = 5,
-        min_num_episodes_per_worker: int = 20,
-        # min_num_episodes_per_worker: int = 8,
+        min_num_episodes_per_worker: int = 10,
         use_dirichlet: bool = True,
         test_use_dirichlet: bool = False,
-        value_support: DiscreteSupport = DiscreteSupport(-10, 10, 1.0),
+        value_support: DiscreteSupport = DiscreteSupport(-5, 1, 1.0),
         value_transform: bool = True,
         log_dir: str = None,
     ):
@@ -74,6 +73,7 @@ class Config(BaseConfig):
             value_support,
             value_transform,
         )
+        # rewrote by user agruments in the main.py 
         self.log_dir = log_dir
         self.num_target_blocks = num_target_blocks
 

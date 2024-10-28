@@ -141,7 +141,7 @@ class MCTSWorker:
                         not self.config.root_value_targets
                     ):  # Overwrite root values calculated during MCTS search with actual trajectory state returns
                         transition_buffers[env_index].augment_value_targets(
-                            max if self.config.max_reward_return else sum
+                            max if self.config.max_reward_return else sum, gamma=self.config.gamma
                         )
 
                     # Priority by "goodness"
