@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--num_target_blocks", default=5, type=int)
     parser.add_argument("--c_init", default=5.25, type=int)
-    parser.add_argument("--num_simulations", default=15, type=int)
+    parser.add_argument("--num_simulations", default=30, type=int)
     parser.add_argument("--min_num_episodes_per_worker", default=10, type=int)
     parser.add_argument("--training_steps", default=15, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
