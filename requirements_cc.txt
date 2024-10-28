@@ -10,7 +10,6 @@ jsonschema==4.23.0+computecanada
 jsonschema_specifications==2024.10.1+computecanada
 msgpack==1.0.8+computecanada
 packaging==24.1+computecanada
-protobuf==5.28.0+computecanada
 PyYAML==6.0.1+computecanada
 ray==2.37.0+computecanada
 referencing==0.35.1+computecanada
