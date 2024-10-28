@@ -22,3 +22,4 @@ scipy==1.14.1+computecanada
 tensorboard==2.17.0
 wandb==0.14.2+computecanada
 graphviz==0.20.3+computecanada
+pandas==2.2.2.+computecanada
