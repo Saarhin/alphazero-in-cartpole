@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument("--opr", default="train", type=str)
     parser.add_argument("--num_rollout_workers", default=4, type=int)
     parser.add_argument("--num_cpus_per_worker", default=4, type=float)
-    parser.add_argument("--num_gpus_per_worker", default=0.2, type=float)
+    parser.add_argument("--num_gpus_per_worker", default=0.25, type=float)
     parser.add_argument("--num_test_episodes", default=200, type=float)
     parser.add_argument("--model_path", default=None)
     # parser.add_argument(
@@ -81,8 +81,8 @@ if __name__ == "__main__":
             setattr(config, arg, arg_val)
             print(f'Adding "{arg}" config entry with {arg_val}')
         
-    setattr(config, 'replay_buffer_size', args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 4)
-    print(f'Overwriting "replay_buffer_size" config entry with {args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 4}')
+    setattr(config, 'replay_buffer_size', args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2)
+    print(f'Overwriting "replay_buffer_size" config entry with {args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2}')
             
     print(args)
             
