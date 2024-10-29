@@ -13,7 +13,7 @@ export CUBLAS_WORKSPACE_CONFIG=:4096:8
 export WANDB_MODE=offline # log offline
 export VTR_ROOT=$your_root_path_of_VTR/vtr-verilog-to-routing
 export results=$SLURM_TMPDIR/results
-mv /home/shang8/scratch/alphazero-in-cartpole/data $SLURM_TMPDIR/data
+cp -R /home/shang8/scratch/alphazero-in-cartpole/data $SLURM_TMPDIR/data
 export data=$SLURM_TMPDIR/data
 
 module load python/3.10
