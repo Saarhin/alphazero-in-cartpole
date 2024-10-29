@@ -38,7 +38,7 @@ class Config(BaseConfig):
         min_num_episodes_per_worker: int = 10,
         use_dirichlet: bool = True,
         test_use_dirichlet: bool = False,
-        value_support: DiscreteSupport = DiscreteSupport(-5, 1, 1.0),
+        value_support: DiscreteSupport = DiscreteSupport(-10, 1, 1.0),
         value_transform: bool = True,
         log_dir: str = None,
     ):
