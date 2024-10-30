@@ -37,7 +37,7 @@ Given a placement result produced by our RL agent, let it do the routing part an
 2. cd into the repo
 
 3. ```pip install -r requirements_cc.txt ```\
-```pip install ray[default] --no-index```\
+```pip install --no-index ray[default] ```\
 ```pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu121```
 
 4. open ~/.bashrc and add following lines\

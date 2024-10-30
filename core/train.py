@@ -16,7 +16,10 @@ from core.storage import SharedStorage
 
 def train(args, config: BaseConfig, model, summary_writer, log_dir):
     print("Starting training...")
-    ray.init()
+    if args.cc:
+        ray.init(address=f"{os.environ['HEAD_NODE']}:{os.environ['RAY_PORT']}",_node_ip_address=os.environ['HEAD_NODE'])
+    else:
+        ray.init()
     print("Ray initialized")
 
     optimizer = torch.optim.AdamW(

@@ -83,8 +83,20 @@ if __name__ == "__main__":
         
     setattr(config, 'replay_buffer_size', args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2)
     print(f'Overwriting "replay_buffer_size" config entry with {args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2}')
-            
+    
+    # for evaluation purposes
+    config.num_envs_per_worker = 1
+    config.num_simulations = 10
+    args.opr="test"
+    args.num_rollout_workers=1
+    args.num_cpus_per_worker=16
+    args.num_gpus_per_worker=1
+    args.num_test_episodes=1
+    config.num_target_blocks = 15
+    args.model_path="/home/swang848/RL-analog/results/sim-v0_17102024_0022/model_latest.pt"
     print(args)
+    
+    
             
     if args.wandb and not args.debug:
         wandb.init(project="MCTSplace", group=args.group_name, config=config)
