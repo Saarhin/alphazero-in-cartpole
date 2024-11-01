@@ -78,7 +78,7 @@ class Placement(gym.Env):
                 "board_image": spaces.Box(
                     low=0,
                     high=np.inf,
-                    shape=(6, self.height, self.width),
+                    shape=(6, self.height, self.width), # capacity, current block, swap_place, sink, source, connections
                     dtype=float,
                 ),
                 "place_infos": spaces.Box(

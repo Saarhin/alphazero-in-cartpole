@@ -27,7 +27,7 @@ wandb offline
 ray start --head --node-ip-address=$HEAD_NODE --port=$RAY_PORT --num-cpus=32 --num-gpus=2 --block &
 sleep 20
 
-python3 main.py --wandb --amp --cc --group_name c5b --seed 0 \
+PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c5b --seed 0 \
                 --num_rollout_workers 8 --num_cpus_per_worker 4 --num_gpus_per_worker 0.25 \
                 --min_num_episodes_per_worker 20 --num_target_blocks 5 --num_simulations 50 \
                 
