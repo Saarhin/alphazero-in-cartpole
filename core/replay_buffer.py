@@ -90,6 +90,7 @@ class MCTSRollingWindow:
 @dataclass
 class TransitionBuffer:
     obs: List[np.ndarray] = field(default_factory=lambda: [])
+    actions: List[int] = field(default_factory=lambda: [])
     rewards: List[float] = field(default_factory=lambda: [])
     dones: List[bool] = field(default_factory=lambda: [])
     infos: List[Dict[str, Any]] = field(default_factory=lambda: [])
@@ -114,9 +115,10 @@ class TransitionBuffer:
                 pass
 
     def add_one(
-        self, obs, reward, done, info, mcts_policy, value_target, env_state, priority
+        self, obs, action, reward, done, info, mcts_policy, value_target, env_state, priority
     ):
         self.obs.append(obs)
+        self.actions.append(action)
         self.rewards.append(reward)
         self.dones.append(done)
         self.infos.append(info)
@@ -242,7 +244,19 @@ class TransitionBuffer:
             stats["end_of_episode_rewards"].append(buffer.rewards[-1])
             stats["end_of_episode_wirelength"].append(buffer.infos[-1]["wirelength"])
         return stats
+    
+    @staticmethod
+    def compute_evaluation_buffers(buffers: List["TransitionBuffer"]):
+        stats = {"action": [], "reward": [], "info": [], "mcts_policy": [], "value_target": []}
+        for buffer in buffers:
+            stats["action"].extend(buffer.actions)
+            stats["reward"].extend(buffer.rewards)
+            stats["info"].extend(buffer.infos)
+            stats["mcts_policy"].extend(buffer.mcts_policies)
+            stats["value_target"].extend(buffer.value_targets)
+        return stats
         
+     
     def update_priorities(self, batch_indices, new_priorities):
         for i, prio in enumerate(new_priorities):
             self.priorities[batch_indices[i]] = prio

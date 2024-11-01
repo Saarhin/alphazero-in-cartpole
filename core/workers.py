@@ -113,6 +113,7 @@ class MCTSWorker:
                     mcts_windows[
                         env_index
                     ].latest_obs(),  # The observation the action is based upon (vs. `obs`, which is the observation the action generated)
+                    action,
                     reward,
                     done,
                     info,
@@ -227,6 +228,7 @@ class TestWorker(MCTSWorker):
         super().__init__(config, device, amp, num_envs, use_dirichlet)
 
         self.stats = None
+        self.evaluation_stats = None
 
     def run(self, model_weights, num_episodes):
         transition_buffers = []
@@ -239,9 +241,10 @@ class TestWorker(MCTSWorker):
 
         # Compute and store stats
         self.stats = TransitionBuffer.compute_stats_buffers(transition_buffers)
+        self.evaluation_stats = TransitionBuffer.compute_evaluation_buffers(transition_buffers)
 
     def get_stats(self):
-        return self.stats
+        return self.stats, self.evaluation_stats
 
 
 @ray.remote

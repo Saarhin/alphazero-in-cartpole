@@ -17,7 +17,10 @@ from core.storage import SharedStorage
 def train(args, config: BaseConfig, model, summary_writer, log_dir):
     print("Starting training...")
     if args.cc:
-        ray.init(address=f"{os.environ['HEAD_NODE']}:{os.environ['RAY_PORT']}",_node_ip_address=os.environ['HEAD_NODE'])
+        ray.init(
+            address=f"{os.environ['HEAD_NODE']}:{os.environ['RAY_PORT']}",
+            _node_ip_address=os.environ["HEAD_NODE"],
+        )
     else:
         ray.init()
     print("Ray initialized")
@@ -43,6 +46,7 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
     storage = SharedStorage.remote(config, args.amp)
     storage.set_weights.remote(model.get_weights())  # Broadcast model
 
+    breakpoint()
     rollout_workers = [
         RolloutWorker.options(
             num_cpus=args.num_cpus_per_worker, num_gpus=args.num_gpus_per_worker
@@ -72,7 +76,7 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
 
         replay_buffer_size = ray.get(replay_buffer.size.remote())
         print(f"{replay_buffer_size} num samples inside replay buffer...")
-    
+
         # Do optimization step
         total_losses, policy_losses, value_losses = [], [], []
         print("Updating weights...")
@@ -112,16 +116,20 @@ def train(args, config: BaseConfig, model, summary_writer, log_dir):
         if args.wandb and not args.debug:
             print(wandb_logs)
             wandb.log(
-                {  
-                    "rollout/avg_end_of_episode_rewards": mean(wandb_logs["end_of_episode_rewards"]),
-                    "rollout/avg_end_of_episode_wirelength": mean(wandb_logs["end_of_episode_wirelength"]),
+                {
+                    "rollout/avg_end_of_episode_rewards": mean(
+                        wandb_logs["end_of_episode_rewards"]
+                    ),
+                    "rollout/avg_end_of_episode_wirelength": mean(
+                        wandb_logs["end_of_episode_wirelength"]
+                    ),
                     "train/total_loss": mean(total_losses),
                     "train/policy_loss": mean(policy_losses),
                     "train/value_loss": mean(value_losses),
                     "train/replay_buffer_size": replay_buffer_size,
                 }
             )
-            
+
         summary_writer.add_scalar("train/total_loss", mean(total_losses), train_step)
         summary_writer.add_scalar("train/policy_loss", mean(policy_losses), train_step)
         summary_writer.add_scalar("train/value_loss", mean(value_losses), train_step)

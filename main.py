@@ -15,13 +15,15 @@ from core.train import train
 from core.test import test
 from config.place import Config
 
+
 def set_seed(seed):
-    random.seed(seed) 
+    random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-    
+
+
 if __name__ == "__main__":
     parser = ArgumentParser("MCTS Place, GO")
     parser.add_argument("--env", type=str, default="Place-v0")
@@ -44,14 +46,14 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--group_name", default="default", type=str)
     parser.add_argument("--seed", default=0, type=int)
-    parser.add_argument("--num_target_blocks", default=15, type=int)
-    parser.add_argument("--c_init", default=5.25, type=int)
-    parser.add_argument("--num_simulations", default=80, type=int)
+    parser.add_argument("--num_target_blocks", default=5, type=int)
+    parser.add_argument("--c_init", default=3, type=int)
+    parser.add_argument("--num_simulations", default=50, type=int)
     parser.add_argument("--min_num_episodes_per_worker", default=10, type=int)
-    parser.add_argument("--training_steps", default=30, type=int)
+    parser.add_argument("--training_steps", default=15, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
     args = parser.parse_args()
-    
+
     set_seed(args.seed)
 
     sub_dir = datetime.now().strftime("%d%m%Y_%H%M")
@@ -66,13 +68,11 @@ if __name__ == "__main__":
             log_dir = os.path.join(args.results_dir, sub_dir)
         else:
             log_dir = os.path.join(os.getcwd(), args.results_dir, sub_dir)
-        
+
     summary_writer = SummaryWriter(log_dir, flush_secs=10)
 
-    config = Config(
-        log_dir=log_dir
-    )  # Apply set BaseConfig arguments
-    
+    config = Config(log_dir=log_dir)  # Apply set BaseConfig arguments
+
     for arg, arg_val in vars(args).items():
         if hasattr(config, arg):
             setattr(config, arg, arg_val)
@@ -80,23 +80,34 @@ if __name__ == "__main__":
         else:
             setattr(config, arg, arg_val)
             print(f'Adding "{arg}" config entry with {arg_val}')
-        
-    setattr(config, 'replay_buffer_size', args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2)
-    print(f'Overwriting "replay_buffer_size" config entry with {args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2}')
-    
+
+    setattr(
+        config,
+        "replay_buffer_size",
+        args.num_rollout_workers
+        * config.min_num_episodes_per_worker
+        * config.num_target_blocks
+        * 2,
+    )
+    print(
+        f'Overwriting "replay_buffer_size" config entry with {args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2}'
+    )
+
     # for evaluation purposes
     # config.num_envs_per_worker = 1
     # config.num_simulations = 10
-    # args.opr="test"
-    # args.num_rollout_workers=1
-    # args.num_cpus_per_worker=16
-    # args.num_gpus_per_worker=1
-    # args.num_test_episodes=1
-    # config.num_target_blocks = 15
-    # args.model_path="/home/swang848/RL-analog/results/sim-v0_17102024_0022/model_latest.pt"
-    # print(args)
-    
-    
+    # args.opr = "test"
+    # args.num_rollout_workers = 1
+    # args.num_cpus_per_worker = 16
+    # args.num_gpus_per_worker = 1
+    # args.num_test_episodes = 1
+    # config.num_target_blocks = 5
+    # config.c_init = 1.25
+    # args.model_path = (
+    #     "/home/swang848/efficientalphazero/results/Place-v0_28102024_1505/model_5.pt"
+    # )
+    print(args)
+
     if args.wandb and not args.debug:
         wandb.init(project="MCTSplace", group=args.group_name, config=config)
 

@@ -6,3 +6,5 @@ __pycache__
 core/__pycache__
 wandb/
 nohup.out
+/test
+/evaluation

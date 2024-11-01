@@ -118,6 +118,7 @@ class BatchTree:
             prior = priors[i]
             state = mcts_windows[i].env_state
             root = self.roots[i]
+            root.num_visits += 1
             info = mcts_windows[i].infos[0]
 
             if not root.expanded and not root.terminal:
@@ -283,12 +284,16 @@ class MCTS:
             )
             if debug:
                 from core.util import plot_tree
-
+                import os
+                
+                root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                index = roots.roots[0].info['episode_steps']
                 plot_tree(
                     roots.roots[0],
                     leaf_nodes[0],
                     float(round(values[0], 4)),
                     min_max_stats[0],
+                    output_file=os.path.join(root_path, f"evaluation/tree_{index}.gv")
                 )
             
             roots.backpropagate(
@@ -296,7 +301,11 @@ class MCTS:
             )
             if debug:
                 from core.util import plot_tree
-
-                plot_tree(roots.roots[0], leaf_nodes[0], values[0], min_max_stats[0])
-            
+                import os
+                
+                root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                index = roots.roots[0].info['episode_steps']
+                plot_tree(roots.roots[0], leaf_nodes[0], values[0], min_max_stats[0], output_file=os.path.join(root_path, f"evaluation/tree_{index}_1.gv"))
+                breakpoint()
+                
         return roots.get_distributions(), roots.get_values()
