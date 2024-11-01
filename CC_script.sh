@@ -9,6 +9,7 @@
 #SBATCH --mail-user=shang8@ualberta.ca
 #SBATCH --mail-type=ALL
 
+export PYTHONUNBUFFERED=1
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 export WANDB_MODE=offline # log offline
 export VTR_ROOT=/home/shang8/scratch/vtr-verilog-to-routing
