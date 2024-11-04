@@ -3,12 +3,12 @@ import gym
 import random
 from core.util import trans_coordinate
 import os
-import datetime
+from datetime import datetime
 
 sub_dir = datetime.now().strftime("%d%m%Y_%H%M")
 sub_dir = f"Place-v0_{sub_dir}"
 log_dir = f"{os.environ['results']}/{sub_dir}"
-data_dir = os.path.join(os.environ['data'], "optimized.place")
+data_dir = os.environ['data']
 num_target_blocks = 5
 env = gym.make("Place-v0", log_dir=log_dir, simulator=True, num_target_blocks=num_target_blocks)
 

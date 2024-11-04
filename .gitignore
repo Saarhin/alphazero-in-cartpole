@@ -8,3 +8,4 @@ wandb/
 nohup.out
 /test
 /evaluation
+/saved_weights

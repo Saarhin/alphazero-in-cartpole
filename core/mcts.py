@@ -43,9 +43,10 @@ class Node:
         self.expanded = True
 
     def add_exploration_noise(self, noise, exploration_fraction):
-        self.child_priors = np.where(self.child_priors != 0, 
-                                     self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction, 
-                                     self.child_priors)
+        self.child_priors = np.where(self.info['action_mask'], self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction, 0.0)
+        # self.child_priors = np.where(self.child_priors != 0, 
+        #                              self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction, 
+        #                              self.child_priors)
 
     def child_number_visits(self):
         return np.array([child.num_visits for _, child in self.children.items()])
@@ -91,7 +92,8 @@ class Node:
 
     def best_action(self, min_max_stats: MinMaxStats):
         score = self.puct_scores(min_max_stats)
-        masked_score = np.where(self.child_priors != 0, score, -np.inf)
+        masked_score = np.where(self.info["action_mask"], score, -np.inf)
+        # masked_score = np.where(self.child_priors != 0, score, -np.inf)
         max_val = np.max(masked_score)
         action = np.random.choice(np.argwhere(masked_score == max_val).flatten())
         return action
@@ -280,7 +282,7 @@ class MCTS:
             priors, values = self.model.compute_priors_and_values(windows)
 
             debug = (
-                False  # Set to True for MCTS tree plotting (before and after backprop)
+                True  # Set to True for MCTS tree plotting (before and after backprop)
             )
             if debug:
                 from core.util import plot_tree

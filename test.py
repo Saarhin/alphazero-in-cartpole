@@ -18,7 +18,6 @@ with open("/home/swang848/efficientalphazero/data/optimized.place", "r") as file
 obs, infos = env.reset()
 order = env.place_order
 
-value_target = 0
 rewards = list()
 for i in range(num_target_blocks):
     # use random action
@@ -29,11 +28,10 @@ for i in range(num_target_blocks):
     print(sampled_action)
     obs, reward, done, infos = env.step(sampled_action)
     rewards.append(reward)
-    print(value_target)
     print(infos['hpwl'])
     print(infos['wirelength'])
     
 
-for i in reversed(range(num_target_blocks)):
-    value_target = value_target*0.997 + rewards[i]
-    print(value_target)
+# for i in reversed(range(num_target_blocks)):
+#     value_target = value_target*0.997 + rewards[i]
+#     print(value_target)
