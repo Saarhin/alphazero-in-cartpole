@@ -29,11 +29,10 @@ def fill_place_file(
     file_path=None,
 ):
     new_lines = list()
-    need_to_fill_layer = False
     with open(file_path, "r") as file:
-        print(file_path)
         results_dict = dict()
         for index, line in enumerate(file.readlines()):
+            # line = "block_name\tx\ty\tsubblk\tlayer\tblock_number\n"
             if index >= 5:
                 result = trans_coordinate(results[index - 5], grid_size, "vtr")
 
@@ -42,32 +41,30 @@ def fill_place_file(
                 else:
                     results_dict[str(result)] = 1
 
-                line_split = line.strip().split("\t")
+                line_split = line.strip().split()
                 
-                print(f'line {index} {line_split} len is {len(line_split)}') 
-                if len(line_split) < 7:
-                    # stat-padd with 0 for layer columns
-                    line_split[2] = str(result[0])
-                    line_split[3] = str(result[1])
-                    line_split[4] = str(results_dict[str(result)] - 1)
-                    line_split.insert(5, "0")  # layer padding
+                if len(line_split) < 6:  # case: missing the layer column
+                    # stat-padd with 0 for the layer column
+                    line_split[1] = str(result[0])  # x
+                    line_split[2] = str(result[1])  # y
+                    line_split[3] = str(results_dict[str(result)] - 1)  # subblk
+                    line_split.insert(4, "0")  # layer padding
                 else:
-                    line_split[2] = str(result[0])
-                    line_split[3] = str(result[1])
-                    line_split[4] = str(results_dict[str(result)] - 1)
+                    line_split[1] = str(result[0])  # x
+                    line_split[2] = str(result[1])  # y
+                    line_split[3] = str(results_dict[str(result)] - 1)  # subblk
                 modified_line = "\t".join(line_split) + "\n"
-                #print(f'line {index} {line_split} len is {len(line_split)}') 
-                #print(f'line read {line.encode("unicode_escape")} line created {modified_line.encode("unicode_escape")}')
                 new_lines.append(modified_line)
 
 
             elif index < 5:
-                if index in [3, 4] and len(line.strip().split("\t")) < 6:  # line = "block_name\tx\ty\tsubblk\tblock_number"
+                if index in [3, 4] and len(line.strip().split()) < 5:  # case: missing the layer column
+                    """
+                    line 3 = "block_name\tx\ty\tsubblk\tlayer\tblock_number\n"
+                    line 4 = ------ ----- ---- ----- ---- --- ----
+                    """
                     line_split = line.strip().split("\t")
-                    # join index 0 1 2 3 into one string
-                    #prefix = "\t\t".join(line_split[0:2])  # 2 tabs between block_name and x
-                    #prefix += "\t" + line_split[2] + "\t" + line_split[3]  # 1 tab between rest
-                    prefix = "\t".join(line_split[0:4])  # 2tabs between block_name and x, 1 tab between the rest
+                    prefix = "\t".join(line_split[0:4])  
                     # add "layer" to the end of the prefix
                     if index == 3:
                         prefix += "\tlayer"
@@ -76,11 +73,8 @@ def fill_place_file(
                     # add the rest of the line to the prefix
                     prefix += ("\t" + line_split[4] + "\n")
                     new_lines.append(prefix)
-                    print(f'line {index} {prefix} len is {len(line_split)}')
-                    need_to_fill_layer = True
                 else:
                     new_lines.append(line)
-                    print(f'line {index} {line}')
 
     with open(file_path, "w") as file:
         for line in new_lines:
