@@ -32,6 +32,7 @@ def fill_place_file(
     with open(file_path, "r") as file:
         results_dict = dict()
         for index, line in enumerate(file.readlines()):
+            # line = "block_name\tx\ty\tsubblk\tlayer\tblock_number\n"
             if index >= 5:
                 result = trans_coordinate(results[index - 5], grid_size, "vtr")
 
@@ -40,14 +41,40 @@ def fill_place_file(
                 else:
                     results_dict[str(result)] = 1
 
-                line_split = line.strip().split("\t")
-                line_split[2] = str(result[0])
-                line_split[3] = str(result[1])
-                line_split[4] = str(results_dict[str(result)] - 1)
-                new_lines.append("\t".join(line_split) + "\n")
+                line_split = line.strip().split()
+                
+                if len(line_split) < 6:  # case: missing the layer column
+                    # stat-padd with 0 for the layer column
+                    line_split[1] = str(result[0])  # x
+                    line_split[2] = str(result[1])  # y
+                    line_split[3] = str(results_dict[str(result)] - 1)  # subblk
+                    line_split.insert(4, "0")  # layer padding
+                else:
+                    line_split[1] = str(result[0])  # x
+                    line_split[2] = str(result[1])  # y
+                    line_split[3] = str(results_dict[str(result)] - 1)  # subblk
+                modified_line = "\t".join(line_split) + "\n"
+                new_lines.append(modified_line)
+
 
             elif index < 5:
-                new_lines.append(line)
+                if index in [3, 4] and len(line.strip().split()) < 5:  # case: missing the layer column
+                    """
+                    line 3 = "block_name\tx\ty\tsubblk\tlayer\tblock_number\n"
+                    line 4 = ------ ----- ---- ----- ---- --- ----
+                    """
+                    line_split = line.strip().split("\t")
+                    prefix = "\t".join(line_split[0:4])  
+                    # add "layer" to the end of the prefix
+                    if index == 3:
+                        prefix += "\tlayer"
+                    else:
+                        prefix += "\t-----"
+                    # add the rest of the line to the prefix
+                    prefix += ("\t" + line_split[4] + "\n")
+                    new_lines.append(prefix)
+                else:
+                    new_lines.append(line)
 
     with open(file_path, "w") as file:
         for line in new_lines:
