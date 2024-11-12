@@ -43,15 +43,20 @@ class Node:
         self.expanded = True
 
     def add_exploration_noise(self, noise, exploration_fraction):
-        self.child_priors = np.where(self.info['action_mask'], self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction, 0.0)
-        # self.child_priors = np.where(self.child_priors != 0, 
-        #                              self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction, 
+        self.child_priors = np.where(
+            self.info["action_mask"],
+            self.child_priors * (1 - exploration_fraction)
+            + noise * exploration_fraction,
+            0.0,
+        )
+        # self.child_priors = np.where(self.child_priors != 0,
+        #                              self.child_priors * (1 - exploration_fraction) + noise * exploration_fraction,
         #                              self.child_priors)
 
     def child_number_visits(self):
         return np.array([child.num_visits for _, child in self.children.items()])
 
-    def child_values(self, min_max_stats):
+    def child_values(self, min_max_stats, mean_q):
         values = []
         accu = max if self.config.max_reward_return else sum
         for _, child in self.children.items():  # Update min-max stats
@@ -60,6 +65,9 @@ class Node:
                 min_max_stats.update(
                     accu([child.reward, self.config.gamma * child_value])
                 )
+            # if child is not visited, update min-max stats with mean_q
+            else:
+                min_max_stats.update(mean_q)
 
         for _, child in self.children.items():  # Calculate child values
             child_value = child.mean_value()
@@ -68,17 +76,33 @@ class Node:
                     accu([child.reward, self.config.gamma * child_value])
                 )
             else:
-                child_value = 0.0
+                child_value = min_max_stats.normalize(mean_q)
             values.append(child_value)
         return np.array(values)  # Return normalized values
 
     def mean_value(self):
         return self.value_sum / self.num_visits if self.num_visits > 0 else 0.0
 
+    def mean_q(self, parent_q):
+        # see EfficientZero p.18, 'mean_q' function
+        total_q = 0
+        total_visits = 0
+        for _, child in self.children.items():
+            if child.num_visits > 0:
+                total_q += child.reward + self.config.gamma * child.mean_value()
+                total_visits += 1
+
+        if self.parent_traversed is None and total_visits > 0:
+            mean_q = total_q / total_visits
+        else:
+            mean_q = (total_q + parent_q) / (total_visits + 1)
+
+        return mean_q
+
     def get_child(self, action):
         return self.children[action]
 
-    def puct_scores(self, min_max_stats):
+    def puct_scores(self, min_max_stats, mean_q):
         # See: https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphazero-shedding-new-light-on-chess-shogi-and-go/alphazero_preprint.pdf
         # p. 17, Section "Search"
         c_base = self.config.c_base
@@ -87,19 +111,19 @@ class Node:
         visit_term = np.sqrt(self.num_visits) / (self.child_number_visits() + 1)
 
         prior_score = c_term * visit_term * self.child_priors
-        value_score = self.child_values(min_max_stats)
+        value_score = self.child_values(min_max_stats, mean_q)
         return value_score + prior_score
 
-    def best_action(self, min_max_stats: MinMaxStats):
-        score = self.puct_scores(min_max_stats)
+    def best_action(self, min_max_stats: MinMaxStats, mean_q):
+        score = self.puct_scores(min_max_stats, mean_q)
         masked_score = np.where(self.info["action_mask"], score, -np.inf)
         # masked_score = np.where(self.child_priors != 0, score, -np.inf)
         max_val = np.max(masked_score)
         action = np.random.choice(np.argwhere(masked_score == max_val).flatten())
         return action
 
-    def best_child(self, min_max_stats):
-        return self.children[self.best_action(min_max_stats)]
+    def best_child(self, min_max_stats, mean_q):
+        return self.children[self.best_action(min_max_stats, mean_q)]
 
 
 class BatchTree:
@@ -159,11 +183,13 @@ class BatchTree:
         trajectories = []
         for i in range(self.root_num):
             node = self.roots[i]
+            parent_q = 0
 
             trajectories.append([node])
 
             while node.expanded:
-                best_child = node.best_child(min_max_stats[i])
+                mean_q = node.mean_q(parent_q)
+                best_child = node.best_child(min_max_stats[i], mean_q)
                 best_child.parent_traversed = node
                 if (
                     best_child.expanded
@@ -255,7 +281,7 @@ class MCTS:
         for simulation_index in range(self.config.num_simulations):
             windows = deepcopy(mcts_windows)
             trajectories = roots.traverse(windows, min_max_stats)
-            
+
             dones = []
             leaf_nodes = []
             infos = []
@@ -267,17 +293,21 @@ class MCTS:
 
                 from_node = trajectory[-2]
                 to_node = trajectory[-1]
-                
+
                 self.env = self.env.set_state(from_node.env_state)
                 obs, reward, done, info = self.env.step(to_node.action)
 
                 windows[env_index].add(
-                    obs['board_image'], self.env.get_state(), reward, to_node.action, info
+                    obs["board_image"],
+                    self.env.get_state(),
+                    reward,
+                    to_node.action,
+                    info,
                 )
                 leaf_nodes.append(to_node)
                 dones.append(done)
                 infos.append(info)
-                
+
             # Calculate policy logits and value predictions for expanded nodes
             priors, values = self.model.compute_priors_and_values(windows)
 
@@ -287,27 +317,35 @@ class MCTS:
             if debug:
                 from core.util import plot_tree
                 import os
-                
+
                 root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                index = roots.roots[0].info['episode_steps']
+                index = roots.roots[0].info["episode_steps"]
                 plot_tree(
                     roots.roots[0],
                     leaf_nodes[0],
                     float(round(values[0], 4)),
                     min_max_stats[0],
-                    output_file=os.path.join(root_path, f"evaluation/tree_{index}.gv")
+                    output_file=os.path.join(root_path, f"evaluation/tree_{index}.gv"),
                 )
-            
+
             roots.backpropagate(
                 leaf_nodes, windows, values, priors, dones, infos, min_max_stats
             )
             if debug:
                 from core.util import plot_tree
                 import os
-                
+
                 root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                index = roots.roots[0].info['episode_steps']
-                plot_tree(roots.roots[0], leaf_nodes[0], values[0], min_max_stats[0], output_file=os.path.join(root_path, f"evaluation/tree_{index}_1.gv"))
+                index = roots.roots[0].info["episode_steps"]
+                plot_tree(
+                    roots.roots[0],
+                    leaf_nodes[0],
+                    values[0],
+                    min_max_stats[0],
+                    output_file=os.path.join(
+                        root_path, f"evaluation/tree_{index}_1.gv"
+                    ),
+                )
                 breakpoint()
-                
+
         return roots.get_distributions(), roots.get_values()

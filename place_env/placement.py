@@ -12,6 +12,7 @@ from core.preprocess import Preprocess
 import numpy as np
 import pygame
 
+
 class Placement(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
     black = (0, 0, 0)
@@ -22,24 +23,26 @@ class Placement(gym.Env):
     pink = (205, 162, 190)
     orange = (255, 229, 153)
 
-    def __init__(self, log_dir, simulator=False, render_mode=None, num_target_blocks=30):
+    def __init__(
+        self, log_dir, simulator=False, render_mode=None, num_target_blocks=30
+    ):
         # metadata = {"render.modes": ["human"]}
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
 
         # In CC, the data path saved in the local disk is set in the environment variable.
-        if 'data' in os.environ:
-            data_dir = os.environ['data']
+        if "data" in os.environ:
+            data_dir = os.environ["data"]
         else:
-            data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+            data_dir = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
+            )
         preprocess = Preprocess(
             num_target_blocks=num_target_blocks,
             pack_xml_path=os.path.join(data_dir, "tseng.net"),
             block_infos_file_path=os.path.join(data_dir, "block.infos"),
-            primitive_netlist_file_path=os.path.join(
-                data_dir, "primitive.netlist"
-            ),
+            primitive_netlist_file_path=os.path.join(data_dir, "primitive.netlist"),
             grid_constraint_path=os.path.join(data_dir, "grid.constraint"),
             blocks_place_file_path=os.path.join(data_dir, "tseng.place"),
         )
@@ -78,7 +81,11 @@ class Placement(gym.Env):
                 "board_image": spaces.Box(
                     low=0,
                     high=np.inf,
-                    shape=(6, self.height, self.width), # capacity, current block, swap_place, sink, source, connections
+                    shape=(
+                        6,
+                        self.height,
+                        self.width,
+                    ),  # capacity, current block, swap_place, sink, source, connections
                     dtype=float,
                 ),
                 "place_infos": spaces.Box(
@@ -95,7 +102,9 @@ class Placement(gym.Env):
         self.cumulative_reward = 0
         self.place_coords = np.full((len(self.blocks_list), 2), -1)
         self.init_board_image, self.init_place_infos, self.init_place_coords = (
-            self._place_initial_blocks(optimized_file=os.path.join(data_dir, "optimized.place"))
+            self._place_initial_blocks(
+                optimized_file=os.path.join(data_dir, "optimized.place")
+            )
         )
 
         # render
@@ -259,7 +268,7 @@ class Placement(gym.Env):
         # 15 blocks hpwl range
         # best_hpwl = 2600
         # max_hpwl = 4300
-        
+
         # 30 blocks hpwl range
         # best_hpwl = 2600
         # max_hpwl = 4900
@@ -268,7 +277,7 @@ class Placement(gym.Env):
         normalized_reward = (1 - ((hpwl - best_hpwl) / (max_hpwl - best_hpwl))) * 1
         normalized_reward = max(0, min(1, normalized_reward))
         normalized_reward = normalized_reward - 1
-        
+
         # normalized_reward = -hpwl / 1000
 
         return normalized_reward
