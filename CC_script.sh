@@ -3,7 +3,7 @@
 #SBATCH --gpus-per-node=2
 #SBATCH --ntasks-per-node=32
 #SBATCH --mem=32G
-#SBATCH --time=2:00:00
+#SBATCH --time=5:00:00
 #SBATCH --account=rrg-mtaylor3
 #SBATCH --output=/home/shang8/scratch/slurm_out/%A.out
 #SBATCH --mail-user=shang8@ualberta.ca
