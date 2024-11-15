@@ -235,7 +235,7 @@ class Preprocess:
         primitive_netlist_file_path,
         grid_constraint_path,
         blocks_place_file_path,
-        order="connections",
+        order="default",
     ) -> None:
         self.grid_constraint_path = grid_constraint_path
 

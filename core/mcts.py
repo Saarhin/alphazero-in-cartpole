@@ -311,9 +311,7 @@ class MCTS:
             # Calculate policy logits and value predictions for expanded nodes
             priors, values = self.model.compute_priors_and_values(windows)
 
-            debug = (
-                True  # Set to True for MCTS tree plotting (before and after backprop)
-            )
+            debug = self.config.debug
             if debug:
                 from core.util import plot_tree
                 import os

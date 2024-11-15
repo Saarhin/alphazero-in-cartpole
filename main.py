@@ -94,18 +94,18 @@ if __name__ == "__main__":
     )
 
     # for evaluation purposes
-    config.num_envs_per_worker = 1
-    config.num_simulations = 10
-    args.opr = "test"
-    args.num_rollout_workers = 1
-    args.num_cpus_per_worker = 16
-    args.num_gpus_per_worker = 1
-    args.num_test_episodes = 1
-    config.num_target_blocks = 5
-    config.c_init = 3
-    args.model_path = (
-        "/home/swang848/efficientalphazero/saved_weights/5b_optimal/model_latest.pt"
-    )
+    # config.num_envs_per_worker = 1
+    # config.num_simulations = 10
+    # args.opr = "test"
+    # args.num_rollout_workers = 1
+    # args.num_cpus_per_worker = 16
+    # args.num_gpus_per_worker = 1
+    # args.num_test_episodes = 1
+    # config.num_target_blocks = 5
+    # config.c_init = 3
+    # args.model_path = (
+    #     "/home/swang848/efficientalphazero/saved_weights/5b_optimal/model_latest.pt"
+    # )
     print(args)
 
     if args.wandb and not args.debug:
