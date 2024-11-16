@@ -47,10 +47,10 @@ if __name__ == "__main__":
     parser.add_argument("--group_name", default="default", type=str)
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--num_target_blocks", default=5, type=int)
-    parser.add_argument("--c_init", default=3, type=int)
+    parser.add_argument("--c_init", default=1.25, type=int)
     parser.add_argument("--num_simulations", default=50, type=int)
-    parser.add_argument("--min_num_episodes_per_worker", default=10, type=int)
-    parser.add_argument("--training_steps", default=15, type=int)
+    parser.add_argument("--min_num_episodes_per_worker", default=20, type=int)
+    parser.add_argument("--training_steps", default=25, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
     args = parser.parse_args()
 

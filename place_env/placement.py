@@ -262,12 +262,12 @@ class Placement(gym.Env):
 
     def hpwl_reward(self, hpwl):
         # 5 blocks hpwl range
-        best_hpwl = 2733
-        max_hpwl = 3362
+        # best_hpwl = 2733
+        # max_hpwl = 3362
 
         # 15 blocks hpwl range
-        # best_hpwl = 2600
-        # max_hpwl = 4300
+        best_hpwl = 2600
+        max_hpwl = 4300
 
         # 30 blocks hpwl range
         # best_hpwl = 2600

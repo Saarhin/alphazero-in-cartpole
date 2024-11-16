@@ -53,7 +53,7 @@ def write_blank_place_file(blocks: list, file_path: str):
             file.write("{}\t\t0\t0\t0\t#{}\n".format(block["name"], block["index"]))
 
 
-def get_grid_infos(grid_constraint_file_path) -> (dict, int, int, int): # type: ignore
+def get_grid_infos(grid_constraint_file_path) -> (dict, int, int, int):  # type: ignore
     """
     constraint dictionary indicated the possible positions of the blocks placement
     the key is the type of blocks, and the corresponding value indicates the possible placement positions
@@ -117,9 +117,8 @@ def get_block_primitives_dict(xml_path) -> dict:
     Input: vpr pack process output(the file with .net suffix).
     Output: block_primitives dictionary
     """
-    base_path = os.getenv("EDA_ROOT")
 
-    tree = ET.parse(os.path.join(base_path, xml_path))
+    tree = ET.parse(xml_path)
     root = tree.getroot()
 
     blocks_primitives_dict = __find_block(root)
@@ -216,7 +215,7 @@ def get_netlist_list_removing_duplicates(netlist_list: list) -> list:
     return list(edge_set)
 
 
-def set_place_order(blocks_list, num_placed_blocks, type="connections"):
+def set_place_order(blocks_list, num_placed_blocks, type="default"):
     if type == "default":
         return blocks_list[:num_placed_blocks]["index"].to_list()
     elif type == "connections":
@@ -235,7 +234,7 @@ class Preprocess:
         primitive_netlist_file_path,
         grid_constraint_path,
         blocks_place_file_path,
-        order="default",
+        order="connections",
     ) -> None:
         self.grid_constraint_path = grid_constraint_path
 

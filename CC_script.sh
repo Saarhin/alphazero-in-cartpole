@@ -29,4 +29,10 @@ sleep 20
 PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c5b --seed 0 \
                 --num_rollout_workers 8 --num_cpus_per_worker 4 --num_gpus_per_worker 0.25 \
                 --min_num_episodes_per_worker 20 --num_target_blocks 5 --num_simulations 50 \
+                --training_steps 10 --c_init 1.25
+
+PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c15b --seed 0 \
+                --num_rollout_workers 8 --num_cpus_per_worker 4 --num_gpus_per_worker 0.25 \
+                --min_num_episodes_per_worker 20 --num_target_blocks 15 --num_simulations 100 \
+                --training_steps 25 --c_init 1.25
                 
