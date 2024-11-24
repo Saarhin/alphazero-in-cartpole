@@ -112,10 +112,13 @@ class ResModel(BaseModel):
         self.to(device)
 
     def forward(self, x):
-        with torch.autocast(device_type=self.device, dtype=torch.bfloat16, enabled=self.amp):
+        # Cuda only supports bfloat16 computation in ampere or newer GPUS 
+        # TODO: CPU only support torch.bfloat16 in autocast, but we are only doing experiment on GPU so no need to accomodate CPU
+        with torch.autocast(device_type=self.device, dtype=torch.float16, enabled=self.amp):
             feat = self.shared(x)
             p = self.actor(feat)
             v = self.critic(feat)
+
         return p, v
 
     def compute_priors_and_values(self, windows: List[MCTSRollingWindow]):
