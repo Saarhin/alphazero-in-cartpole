@@ -9,8 +9,8 @@
 #SBATCH --mail-user=shang8@ualberta.ca
 #SBATCH --mail-type=ALL
 
-echo $c_init
-echo $num_simulations
+echo $1 # c_init
+echo $2 # num_simulations
 
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 export WANDB_MODE=offline # log offline
@@ -32,8 +32,8 @@ sleep 20
 # c15b
 PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c15b --seed 0 \
                 --num_rollout_workers 8 --num_cpus_per_worker 4 --num_envs_per_worker 10 --num_gpus_per_worker 0.25 \
-                --min_num_episodes_per_worker 20 --num_target_blocks 15 --num_simulations $num_simulations \
-                --training_steps 25 --c_init $c_init 
+                --min_num_episodes_per_worker 20 --num_target_blocks 15 --num_simulations $2 \
+                --training_steps 25 --c_init $1 
 
 cp -r $results/* /home/shang8/scratch/alphazero-in-cartpole/results/
 
