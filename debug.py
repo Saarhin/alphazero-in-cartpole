@@ -5,14 +5,15 @@ import time
 
 
 log_dir = os.path.join(os.getcwd(), "results/debug")
-env = gym.make("Place-v0", log_dir=log_dir, simulator=True, num_target_blocks=5)
+env = gym.make("Place-v0", log_dir=log_dir, simulator=False, num_target_blocks=15)
 
-action_list = [52, 30, 29, 40, 19]
+# c5b optimal
+action_list = [40, 30, 19, 52, 29]
+# c15b optimal
+action_list = [49, 51, 81, 40, 60, 30, 41, 31, 19, 70, 52, 29, 62, 63, 53]
 obs, infos = env.reset()
 for action in action_list:
-    start_time = time.time()
     obs, reward, done, infos = env.step(action)
-    end_time = time.time()
+    print(infos['placed_block'])
     print(reward)
-    print(end_time - start_time)
     

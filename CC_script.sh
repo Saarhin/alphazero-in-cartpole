@@ -9,6 +9,9 @@
 #SBATCH --mail-user=shang8@ualberta.ca
 #SBATCH --mail-type=ALL
 
+echo $c_init
+echo $num_simulations
+
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 export WANDB_MODE=offline # log offline
 export VTR_ROOT=/home/shang8/scratch/vtr-verilog-to-routing
@@ -26,10 +29,13 @@ wandb offline
 ray start --head --node-ip-address=$HEAD_NODE --port=$RAY_PORT --num-cpus=32 --num-gpus=2 --block &
 sleep 20
 
-PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c5b --seed 0 \
-                --num_rollout_workers 8 --num_cpus_per_worker 4 --num_gpus_per_worker 0.25 \
-                --min_num_episodes_per_worker 20 --num_target_blocks 5 --num_simulations 50 \
-                --training_steps 10 --c_init 1.25
+# c15b
+PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c15b --seed 0 \
+                --num_rollout_workers 8 --num_cpus_per_worker 4 --num_envs_per_worker 10 --num_gpus_per_worker 0.25 \
+                --min_num_episodes_per_worker 20 --num_target_blocks 15 --num_simulations $num_simulations \
+                --training_steps 25 --c_init $c_init 
+
+cp -r $results/* /home/shang8/scratch/alphazero-in-cartpole/results/
 
 # PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c15b --seed 0 \
 #                 --num_rollout_workers 8 --num_cpus_per_worker 4 --num_gpus_per_worker 0.25 \

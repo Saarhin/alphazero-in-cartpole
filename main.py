@@ -46,11 +46,12 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--group_name", default="default", type=str)
     parser.add_argument("--seed", default=0, type=int)
-    parser.add_argument("--num_target_blocks", default=5, type=int)
-    parser.add_argument("--c_init", default=1.25, type=float)
-    parser.add_argument("--num_simulations", default=50, type=int)
+    parser.add_argument("--num_target_blocks", default=15, type=int)
+    parser.add_argument("--c_init", default=3, type=float)
+    parser.add_argument("--num_simulations", default=70, type=int)
+    parser.add_argument("--num_envs_per_worker", default=5, type=int)
     parser.add_argument("--min_num_episodes_per_worker", default=20, type=int)
-    parser.add_argument("--training_steps", default=25, type=int)
+    parser.add_argument("--training_steps", default=20, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
     args = parser.parse_args()
 
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         * 2,
     )
     print(
-        f'Overwriting "replay_buffer_size" config entry with {args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 2}'
+        f'Overwriting "replay_buffer_size" config entry with {args.num_rollout_workers * config.min_num_episodes_per_worker * config.num_target_blocks * 4}'
     )
 
     # for evaluation purposes
