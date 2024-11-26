@@ -4,8 +4,8 @@ import random
 from core.util import trans_coordinate
 
 log_dir = "/home/swang848/efficientalphazero/test"
-num_target_blocks = 5
-env = gym.make("Place-v0", log_dir=log_dir, simulator=True, num_target_blocks=num_target_blocks)
+num_target_blocks = 30
+env = gym.make("Place-v0", log_dir=log_dir, simulator=False, num_target_blocks=num_target_blocks)
 
 optimized_action = list()
 with open("/home/swang848/efficientalphazero/data/optimized.place", "r") as file:
@@ -24,8 +24,8 @@ for i in range(num_target_blocks):
     one_indices = [index for index, value in enumerate(infos['action_mask']) if value == 1]
     sampled_action = random.choice(one_indices)
     # use optimized action
-    sampled_action = optimized_action[order[i]]
-    print(sampled_action)
+    # sampled_action = optimized_action[order[i]]
+    # print(sampled_action)
     obs, reward, done, infos = env.step(sampled_action)
     rewards.append(reward)
     print(infos['hpwl'])
