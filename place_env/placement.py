@@ -270,8 +270,16 @@ class Placement(gym.Env):
         # max_hpwl = 4300
 
         # 30 blocks hpwl range
+        # best_hpwl = 2600
+        # max_hpwl = 4900
+        
+        # 45 blocks hpwl range
+        # best_hpwl = 
+        # max_hpwl = 
+        
+        # 56 blocks hpwl range
         best_hpwl = 2600
-        max_hpwl = 4900
+        max_hpwl = 5700
 
         # scaled_reward = (best_hpwl_results - hpwl) / 1000
         normalized_reward = (1 - ((hpwl - best_hpwl) / (max_hpwl - best_hpwl))) * 1
