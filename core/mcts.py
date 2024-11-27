@@ -344,6 +344,5 @@ class MCTS:
                         root_path, f"evaluation/tree_{index}_1.gv"
                     ),
                 )
-                breakpoint()
 
         return roots.get_distributions(), roots.get_values()

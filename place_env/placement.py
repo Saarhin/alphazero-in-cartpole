@@ -261,25 +261,27 @@ class Placement(gym.Env):
         return hpwl_total
 
     def hpwl_reward(self, hpwl):
-        # 5 blocks hpwl range
-        # best_hpwl = 2733
-        # max_hpwl = 3362
-
-        # 15 blocks hpwl range
-        # best_hpwl = 2600
-        # max_hpwl = 4300
-
-        # 30 blocks hpwl range
-        # best_hpwl = 2600
-        # max_hpwl = 4900
         
-        # 45 blocks hpwl range
-        # best_hpwl = 
-        # max_hpwl = 
-        
-        # 56 blocks hpwl range
-        best_hpwl = 2600
-        max_hpwl = 5700
+        if self.num_blocks == 5:
+            # 5 blocks hpwl range
+            best_hpwl = 2733
+            max_hpwl = 3362
+        elif self.num_blocks == 15:
+            # 15 blocks hpwl range
+            best_hpwl = 2600
+            max_hpwl = 4300
+        elif self.num_blocks == 30:
+            # 30 blocks hpwl range
+            best_hpwl = 2600
+            max_hpwl = 4900
+        elif self.num_blocks == 45:
+            # 45 blocks hpwl range
+            best_hpwl = 0
+            max_hpwl = 0
+        elif self.num_blocks == 56:
+            # 56 blocks hpwl range
+            best_hpwl = 2600
+            max_hpwl = 5700
 
         # scaled_reward = (best_hpwl_results - hpwl) / 1000
         normalized_reward = (1 - ((hpwl - best_hpwl) / (max_hpwl - best_hpwl))) * 1
