@@ -32,7 +32,7 @@ sleep 20
 # c56b
 PYTHONUNBUFFERED=1 python3 -u main.py --wandb --amp --cc --group_name c56b --seed 0 \
                 --num_rollout_workers 8 --num_cpus_per_worker 4 --num_envs_per_worker 20 --num_gpus_per_worker 0.25 \
-                --min_num_episodes_per_worker 20 --num_target_blocks 30 --num_simulations $2 \
+                --min_num_episodes_per_worker 20 --num_target_blocks 56 --num_simulations $2 \
                 --training_steps 50 --c_init $1 
 
 # c30b
