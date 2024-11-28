@@ -9,7 +9,7 @@ The setup composes of 2 parts: VTR and python project code. These two parts will
 Say now you are at /scratch on CC.
 
 # Virtualenv
-1. ```module load StdEnv/2020``` \
+1. ```module load StdEnv/2023``` \
     ```module load python/3.10``` \
     ```module load cuda``` \
     ```module load clang```
