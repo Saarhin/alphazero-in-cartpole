@@ -46,6 +46,7 @@ class Placement(gym.Env):
             grid_constraint_path=os.path.join(data_dir, "grid.constraint"),
             blocks_place_file_path=os.path.join(data_dir, "tseng.place"),
         )
+        self.cheat_trajectory = self.cheat(file_path=os.path.join(data_dir, "optimized.place"))
 
         truncate_step = preprocess.num_target_blocks
 
@@ -140,13 +141,13 @@ class Placement(gym.Env):
 
         hpwl = self.calculate_hpwl()
         reward = self.hpwl_reward(hpwl)
+        # if action == self.cheat_trajectory[self.num_step_episode]:
+        #     reward = 0.0
         done = False
         wirelength = 0
 
-        if (self.num_step_episode == self.step_limit - 1) or reward == 0:
+        if (self.num_step_episode == self.step_limit - 1):
             done = True
-            if reward == 0:
-                reward += 5
             self.num_episode += 1
             if self.simulator:
                 (wire_term, critical_path_delay, wirelength) = self.call_simulator(
@@ -260,6 +261,17 @@ class Placement(gym.Env):
             hpwl_total += HPWL
         return hpwl_total
 
+    def cheat(self, file_path):
+        optimized_action = list()
+        with open(file_path, "r") as file:
+            for index, line in enumerate(file.readlines()):
+                if 60 >= index >= 5:
+                    line_split = line.strip().split()
+                    coord = trans_coordinate([int(line_split[1]), int(line_split[2])], 11, "cs")
+                    optimized_action.append(coord[0] * 11 + coord[1])
+        
+        return optimized_action
+        
     def hpwl_reward(self, hpwl):
         
         if self.num_blocks == 5:

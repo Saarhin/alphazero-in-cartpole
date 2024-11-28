@@ -47,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("--group_name", default="default", type=str)
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--num_target_blocks", default=15, type=int)
-    parser.add_argument("--c_init", default=3, type=float)
+    parser.add_argument("--c_init", default=2, type=float)
     parser.add_argument("--num_simulations", default=70, type=int)
     parser.add_argument("--num_envs_per_worker", default=5, type=int)
     parser.add_argument("--min_num_episodes_per_worker", default=20, type=int)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     set_seed(args.seed)
 
     sub_dir = datetime.now().strftime("%d%m%Y_%H%M")
-    sub_dir = f"{args.env}_{sub_dir}"
+    sub_dir = f"{args.env}_{sub_dir}_{random.randint(10, 99)}"
     # if program is run on CC, save logs to the local disk.
     if args.cc:
         log_dir = f"{os.environ['results']}/{sub_dir}"

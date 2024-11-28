@@ -27,7 +27,7 @@ class Config(BaseConfig):
         momentum: float = 0.9,
         c_init: float = 3,
         c_base: float = 19652,
-        gamma: float = 0.997,
+        gamma: float = 1,
         frame_stack: int = 5,
         max_reward_return: bool = False,
         hash_nodes: bool = False,

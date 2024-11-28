@@ -30,7 +30,7 @@ Given a placement result produced by our RL agent, let it do the routing part an
 
 # RL-FPGA
 
-1. ```git clone https://github.com/IRLL/RL-FPGA.git```
+1. ```git clone https://github.com/SWang848/alphazero-in-cartpole.git```
 
 2. ```source $your_env_name/bin/activate```
 
