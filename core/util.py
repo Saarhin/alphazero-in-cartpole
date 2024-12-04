@@ -151,10 +151,9 @@ def plot_node(V_est, traj_nodes, leaf_node, graph: graphviz.Digraph, parent_node
         graph.node(parent_name)
         
     child_names = []
-    legal_actions = [12, 19, 29, 30, 40, 52, 86, 97, 100, 106, 107, 108]
     i = 0
     for _, (_, child_node) in enumerate(parent_node.children.items()):
-        if child_node.action not in legal_actions:
+        if parent_node.info["action_mask"][child_node.action] == 0:
             continue
         child_name = node_name(child_node, index + i + 1)
         i += 1
@@ -165,11 +164,11 @@ def plot_node(V_est, traj_nodes, leaf_node, graph: graphviz.Digraph, parent_node
     if len(parent_node.children.keys()) == 0:
         pass
     else:
-        index += len(legal_actions) + 1
+        index += len(child_names) + 1
 
     j = 0
     for _, (_, child_node) in enumerate(parent_node.children.items()):
-        if child_node.action not in legal_actions:
+        if parent_node.info["action_mask"][child_node.action] == 0:
             continue
         child_name = child_names[j]
         j += 1

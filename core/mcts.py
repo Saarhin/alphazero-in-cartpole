@@ -56,7 +56,7 @@ class Node:
     def child_number_visits(self):
         return np.array([child.num_visits for _, child in self.children.items()])
 
-    def child_values(self, min_max_stats, mean_q):
+    def child_values(self, min_max_stats, mean_q=None):
         values = []
         accu = max if self.config.max_reward_return else sum
         for _, child in self.children.items():  # Update min-max stats
@@ -67,7 +67,8 @@ class Node:
                 )
             # if child is not visited, update min-max stats with mean_q
             else:
-                min_max_stats.update(mean_q)
+                if mean_q is not None:
+                    min_max_stats.update(mean_q)
 
         for _, child in self.children.items():  # Calculate child values
             child_value = child.mean_value()
@@ -76,7 +77,10 @@ class Node:
                     accu([child.reward, self.config.gamma * child_value])
                 )
             else:
-                child_value = min_max_stats.normalize(mean_q)
+                if mean_q is not None:
+                    child_value = min_max_stats.normalize(mean_q)
+                else:
+                    child_value = 0.0
             values.append(child_value)
         return np.array(values)  # Return normalized values
 
@@ -102,7 +106,7 @@ class Node:
     def get_child(self, action):
         return self.children[action]
 
-    def puct_scores(self, min_max_stats, mean_q):
+    def puct_scores(self, min_max_stats, mean_q=None):
         # See: https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphazero-shedding-new-light-on-chess-shogi-and-go/alphazero_preprint.pdf
         # p. 17, Section "Search"
         c_base = self.config.c_base
@@ -312,19 +316,19 @@ class MCTS:
             priors, values = self.model.compute_priors_and_values(windows)
 
             debug = self.config.debug
-            if debug:
-                from core.util import plot_tree
-                import os
+            # if debug:
+            #     from core.util import plot_tree
+            #     import os
 
-                root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                index = roots.roots[0].info["episode_steps"]
-                plot_tree(
-                    roots.roots[0],
-                    leaf_nodes[0],
-                    float(round(values[0], 4)),
-                    min_max_stats[0],
-                    output_file=os.path.join(root_path, f"evaluation/tree_{index}.gv"),
-                )
+            #     root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            #     index = roots.roots[0].info["episode_steps"]
+            #     plot_tree(
+            #         roots.roots[0],
+            #         leaf_nodes[0],
+            #         float(round(values[0], 4)),
+            #         min_max_stats[0],
+            #         output_file=os.path.join(root_path, f"evaluation/tree_{index}.gv"),
+            #     )
 
             roots.backpropagate(
                 leaf_nodes, windows, values, priors, dones, infos, min_max_stats
@@ -335,14 +339,15 @@ class MCTS:
 
                 root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                 index = roots.roots[0].info["episode_steps"]
-                plot_tree(
-                    roots.roots[0],
-                    leaf_nodes[0],
-                    values[0],
-                    min_max_stats[0],
-                    output_file=os.path.join(
-                        root_path, f"evaluation/tree_{index}_1.gv"
-                    ),
-                )
+                if simulation_index == self.config.num_simulations - 1 and index == 14:
+                    plot_tree(
+                        roots.roots[0],
+                        leaf_nodes[0],
+                        values[0],
+                        min_max_stats[0],
+                        output_file=os.path.join(
+                            root_path, f"evaluation/tree_{index}.gv"
+                        ),
+                    )
 
         return roots.get_distributions(), roots.get_values()
