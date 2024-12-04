@@ -48,10 +48,10 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--num_target_blocks", default=15, type=int)
     parser.add_argument("--c_init", default=2, type=float)
-    parser.add_argument("--num_simulations", default=70, type=int)
+    parser.add_argument("--num_simulations", default=100, type=int)
     parser.add_argument("--num_envs_per_worker", default=5, type=int)
     parser.add_argument("--min_num_episodes_per_worker", default=20, type=int)
-    parser.add_argument("--training_steps", default=20, type=int)
+    parser.add_argument("--training_steps", default=25, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
     args = parser.parse_args()
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     # for evaluation purposes
     # config.num_envs_per_worker = 1
-    # config.num_simulations = 70
+    # config.num_simulations = 100
     # args.opr = "test"
     # args.num_rollout_workers = 1
     # args.num_cpus_per_worker = 16
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     # config.num_target_blocks = 15
     # config.c_init = 2
     # args.model_path = (
-    #     "/home/swang848/efficientalphazero/saved_weights/15b/Place-v0_25112024_1227/model_latest.pt"
+    #     "/home/swang848/efficientalphazero/saved_weights/15b/Place-v0_30112024_1246_59/model_latest.pt"
     # )
     print(args)
 
